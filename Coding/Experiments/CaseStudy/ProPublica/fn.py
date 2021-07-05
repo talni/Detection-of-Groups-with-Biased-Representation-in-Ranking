@@ -23,11 +23,11 @@ selected_attributes = ["sex", "age_cat", "race"]
 
 
 
-original_data_file = r"../../../../../InputData/Compas_republica/compas-analysis-master/cox-parsed/cox-parsed_7214rows_cat.csv"
-TP_data_file = r"../../../../../InputData/Compas_republica/compas-analysis-master/cox-parsed/cox-parsed-TP-cat.csv"
-FP_data_file = r"../../../../../InputData/Compas_republica/compas-analysis-master/cox-parsed/cox-parsed-FP-cat.csv"
-TN_data_file = r"../../../../../InputData/Compas_republica/compas-analysis-master/cox-parsed/cox-parsed-TN-cat.csv"
-FN_data_file = r"../../../../../InputData/Compas_republica/compas-analysis-master/cox-parsed/cox-parsed-FN-cat.csv"
+original_data_file = r"../../../../../InputData/Compas_ProPublica/compas-analysis-master/cox-parsed/cox-parsed_7214rows_cat.csv"
+TP_data_file = r"../../../../../InputData/Compas_ProPublica/compas-analysis-master/cox-parsed/cox-parsed-TP-cat.csv"
+FP_data_file = r"../../../../../InputData/Compas_ProPublica/compas-analysis-master/cox-parsed/cox-parsed-FP-cat.csv"
+TN_data_file = r"../../../../../InputData/Compas_ProPublica/compas-analysis-master/cox-parsed/cox-parsed-TN-cat.csv"
+FN_data_file = r"../../../../../InputData/Compas_ProPublica/compas-analysis-master/cox-parsed/cox-parsed-FN-cat.csv"
 
 
 
