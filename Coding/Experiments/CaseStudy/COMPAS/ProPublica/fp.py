@@ -1,5 +1,6 @@
 import pandas as pd
-
+import sys
+sys.path.append('../../../../')
 from itertools import combinations
 from Algorithms import pattern_count
 import time
@@ -23,15 +24,15 @@ selected_attributes = ["sex", "age_cat", "race"]
 
 
 
-original_data_file = r"../../../../../InputData/Compas_ProPublica/compas-analysis-master/cox-parsed/cox-parsed_7214rows_cat.csv"
-TP_data_file = r"../../../../../InputData/Compas_ProPublica/compas-analysis-master/cox-parsed/cox-parsed-TP-cat.csv"
-FP_data_file = r"../../../../../InputData/Compas_ProPublica/compas-analysis-master/cox-parsed/cox-parsed-FP-cat.csv"
-TN_data_file = r"../../../../../InputData/Compas_ProPublica/compas-analysis-master/cox-parsed/cox-parsed-TN-cat.csv"
-FN_data_file = r"../../../../../InputData/Compas_ProPublica/compas-analysis-master/cox-parsed/cox-parsed-FN-cat.csv"
+original_data_file = r"../../../../../InputData/COMPAS_ProPublica/compas-analysis-master/cox-parsed/cox-parsed_7214rows_cat.csv"
+TP_data_file = r"../../../../../InputData/COMPAS_ProPublica/compas-analysis-master/cox-parsed/cox-parsed-TP-cat.csv"
+FP_data_file = r"../../../../../InputData/COMPAS_ProPublica/compas-analysis-master/cox-parsed/cox-parsed-FP-cat.csv"
+TN_data_file = r"../../../../../InputData/COMPAS_ProPublica/compas-analysis-master/cox-parsed/cox-parsed-TN-cat.csv"
+FN_data_file = r"../../../../../InputData/COMPAS_ProPublica/compas-analysis-master/cox-parsed/cox-parsed-FN-cat.csv"
 
 
 
-output_path = r'../../../../../OutputData/CaseStudy/ProPublica/fn_greater_than.txt'
+output_path = r'../../../../../OutputData/CaseStudy/ProPublica/fp_greater_than_trying.txt'
 output_file = open(output_path, "w")
 
 output_file.write("selected_attributes: {}\n".format(selected_attributes))
@@ -52,11 +53,12 @@ FN = read_with_att(FN_data_file, selected_attributes)
 
 
 
+# thc = 3696 this is the max thc to find black [-1, -1, 0]
 thc = 20
 time_limit = 5 * 60
 # fairness_definition = 1 # FPR = FP/(FP+TN) False_positive_error_rate_balance
 
-fairness_definition = 2 # FNR = FP/(FP+TN) False_positive_error_rate_balance, but for those treated too well
+fairness_definition = 1 # FPR = FP/(FP+TN) False_positive_error_rate_balance, but for those treated too well
 delta_thf = 0.1
 
 

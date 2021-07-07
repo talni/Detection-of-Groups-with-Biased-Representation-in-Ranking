@@ -10,7 +10,7 @@ import pandas as pd
 from Algorithms import pattern_count
 import time
 from Algorithms import Predict_0_20210127 as predict
-from Algorithms import NewAlgGeneral_0_20210412 as newalggeneral
+
 
 
 def DFSattributes(cur, last, comb, pattern, all_p, mcdes, attributes):

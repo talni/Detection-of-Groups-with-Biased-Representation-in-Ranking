@@ -9,8 +9,6 @@ The whole process:
 
 from Algorithms import pattern_count
 import pandas as pd
-from Algorithms import NewAlg_0_20201128 as newalg
-from Algorithms import NaiveAlg_0_20201111 as naivealg
 import time
 import numpy as np
 import csv
