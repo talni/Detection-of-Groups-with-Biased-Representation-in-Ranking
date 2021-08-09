@@ -31,7 +31,7 @@ Suppose you've already cloned this repository and start from the Example directo
 
 You just need:
 
-    $ python4 fp.py
+    $ python3 fp.py
     $ python3 fn.py
     
 

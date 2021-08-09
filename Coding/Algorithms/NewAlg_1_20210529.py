@@ -7,8 +7,10 @@ Stop point 2: when the cardinality is too small
 Difference from NaiveAlg_0: calculate the number of patterns visited instead of number of calculations
 
 """
+import sys
+sys.path.append('../Coding')
 
-from Algorithms import pattern_count
+from Coding.Algorithms import pattern_count
 import time
 
 
