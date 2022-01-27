@@ -4,10 +4,7 @@ sys.path.append('../Coding')
 from itertools import combinations
 from Algorithms import pattern_count
 import time
-from Algorithms import NewAlgGeneral_1_20210528 as newalg
-from Algorithms import NaiveAlgGeneral_1_202105258 as naivealg
-from Algorithms import Predict_0_20210127 as predict
-
+from Algorithms import NewAlgGeneral_2_20211219 as newalg
 
 """
 cox['sex'].replace(to_replace=['Male', 'Female'], value=[0, 1], inplace=True)
