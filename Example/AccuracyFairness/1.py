@@ -2,7 +2,7 @@ import pandas as pd
 import sys
 sys.path.append('\\../\\../Coding')
 import time
-from Coding.Algorithms import NewAlg_1_20210529 as newalg
+from Coding.Algorithms import NewAlg_2_20211001 as newalg
 
 
 
