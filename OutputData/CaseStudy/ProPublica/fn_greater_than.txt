@@ -1,0 +1,8 @@
+selected_attributes: ['sex', 'age_cat', 'race']
+fairness_definition = 2, thc = 20, delta_thf = 0.1
+newalg, time = 0.07288479804992676 s, num_calculation = 65
+num of patterns detected = 4
+[-2, -2, 5]
+[-2, -2, 3]
+[-2, -2, 2]
+[-2, 2, -2]

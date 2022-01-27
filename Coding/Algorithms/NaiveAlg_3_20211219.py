@@ -10,7 +10,7 @@ When they are -1, use NaiveAlg_2!!!
 
 from itertools import combinations
 import pandas as pd
-from Algorithms import pattern_count
+import pattern_count
 import time
 
 

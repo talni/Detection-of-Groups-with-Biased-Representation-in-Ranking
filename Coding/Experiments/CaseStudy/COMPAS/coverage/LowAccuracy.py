@@ -3,8 +3,8 @@ import pandas as pd
 from itertools import combinations
 from Algorithms import pattern_count
 import time
-from Algorithms import NewAlg_1_20210529 as newalg
-from Algorithms import NaiveAlg_1_20210528 as naivealg
+from Algorithms import NewAlg_2_20211001 as newalg
+from Algorithms import NaiveAlg_3_20211219 as naivealg
 from Algorithms import Predict_0_20210127 as predict
 
 
@@ -23,7 +23,7 @@ from Algorithms import Predict_0_20210127 as predict
 
 # all_attributes = ['sexC', 'ageC','raceC', 'MC','priors_count_C']
 
-selected_attributes = ['sexC', 'ageC','raceC', 'MC','priors_count_C']
+selected_attributes = ['sexC', 'ageC', 'raceC', 'MC', 'priors_count_C']
 
 
 

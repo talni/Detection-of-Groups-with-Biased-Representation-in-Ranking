@@ -16,7 +16,6 @@ When they are -1, use NewAlg_1!!!
 
 from Algorithms import pattern_count
 import time
-from Algorithms import NaiveAlg_2_20211020 as naivealg
 import pandas as pd
 
 
