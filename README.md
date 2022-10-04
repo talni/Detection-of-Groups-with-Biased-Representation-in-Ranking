@@ -1,8 +1,9 @@
 # Detection of Groups with Biased Representation in Ranking
 
 ## Abstract
-Real-life tools for decision-making in many critical domains are based on ranking results. With the increasing awareness of algorithmic fairness, recent works have presented measures for fairness in ranking. Many of those definitions consider the representation of different ``protected groups'', in the top-$k$ ranked items, for any reasonable $k$. %The protected groups are defined based on the values of some sensitive attributes. 
+Real-life tools for decision-making in many critical domains are based on ranking results. With the increasing awareness of algorithmic fairness, recent works have presented measures for fairness in ranking. Many of those definitions consider the representation of different ``protected groups'', in the top-$k$ ranked items, for any reasonable $k$. 
 Given the protected groups, confirming algorithmic fairness is a simple task. However, the groups' definitions may be unknown in advance.
+
 In this paper, we study the problem of detecting groups with biased representation in the top-$k$ ranked items, eliminating the need to pre-define protected groups.
 The number of such groups possible can be exponential, making the problem hard. We first formalize the problem, using two different fairness measures: global representation bounds, and proportional representation. Then we present a simple solution that traverses the different groups in the data and reports those with biased representation (by each fairness measure) in the top-$k$ items for each $k$ in a given range. We then leverage this method to efficiently tackle the problem for each of the fairness measures, presenting an additional optimization utilizing a local search. We conclude with an experimental study, showing the scalability of our approach and demonstrating the usefulness of the proposed optimizations.
 
