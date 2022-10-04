@@ -1,11 +1,10 @@
-# Detection of Unfairly Treated Groups in Classification and Ranking
+# Detection of Groups with Biased Representation in Ranking
 
-## Introduction
-Machine learning (ML) tools are widely used in many real-life everyday applications. With their ubiquitous use in recent years, we also witness an increase in the reported cases where these tools discriminate unfairly. This, in turn, has given rise to increasing interest in the study of algorithmic fairness. Fairness definitions usually refer to a given ``protected group'' in the data, which is defined based on the values of some sensitive attributes. Given a protected group, confirming algorithmic fairness is a simple task. 
-However, the groups discriminated against may not always be known in advance. 
-
-In this paper, we study the problem of detecting groups that are treated unfairly in classification and ranking algorithms, eliminating the need to pre-define sensitive attributes. The number of such groups possible can be exponential, making the problem hard. For the classification context, we propose a heuristic solution that employs pruning to significantly reduce the search space. Then we leverage this method to efficiently tackle the problem in the context of ranking, presenting an additional optimization utilizing a local search. We conclude with an extensive experimental study, demonstrating the scalability and benefits of our approach, and demonstrating the usefulness of the proposed optimizations.
-
+## Abstract
+Real-life tools for decision-making in many critical domains are based on ranking results. With the increasing awareness of algorithmic fairness, recent works have presented measures for fairness in ranking. Many of those definitions consider the representation of different ``protected groups'', in the top-$k$ ranked items, for any reasonable $k$. %The protected groups are defined based on the values of some sensitive attributes. 
+Given the protected groups, confirming algorithmic fairness is a simple task. However, the groups' definitions may be unknown in advance.
+In this paper, we study the problem of detecting groups with biased representation in the top-$k$ ranked items, eliminating the need to pre-define protected groups.
+The number of such groups possible can be exponential, making the problem hard. We first formalize the problem, using two different fairness measures: global representation bounds, and proportional representation. Then we present a simple solution that traverses the different groups in the data and reports those with biased representation (by each fairness measure) in the top-$k$ items for each $k$ in a given range. We then leverage this method to efficiently tackle the problem for each of the fairness measures, presenting an additional optimization utilizing a local search. We conclude with an experimental study, showing the scalability of our approach and demonstrating the usefulness of the proposed optimizations.
 
 ## About this repo
 This repo contains all the algorithms, experiments and datasets.
