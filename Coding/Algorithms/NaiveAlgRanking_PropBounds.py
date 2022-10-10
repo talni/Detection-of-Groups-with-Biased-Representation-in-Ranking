@@ -14,6 +14,10 @@ But here, patterns have different bounds depending on their sizes. We only do lo
 """
 naive alg:
 for each k, we iterate the whole process again, go top down.
+lowerbound = alpha * whole_cardinality * k / data_size
+
+difference from 4:
+use str to denote a pattern
 """
 
 
@@ -112,6 +116,28 @@ def PDominatesM(P, M):
     return False, None
 
 
+def P1DominatedByP2ForStr(str1, str2, num_att):
+    if str1 == str2:
+        return True
+    num_separator = num_att - 1
+    start_pos1 = 0
+    start_pos2 = 0
+    for i in range(num_separator):
+        p1 = str1.find("|", start_pos1)
+        p2 = str2.find("|", start_pos2)
+        s1 = str1[start_pos1:p1]
+        s2 = str2[start_pos2:p2]
+        if s1 != s2 and s2 != '':
+            return False
+        start_pos1 = p1 + 1
+        start_pos2 = p2 + 1
+    s1 = str1[start_pos1:]
+    s2 = str2[start_pos2:]
+    if s1 != s2 and s2 != '':
+        return False
+    return True
+
+
 def GenerateChildren(P, whole_data_frame, ranked_data, attributes):
     children = []
     length = len(P)
@@ -132,20 +158,34 @@ def GenerateChildren(P, whole_data_frame, ranked_data, attributes):
             children.append(s)
     return children
 
+#
+# def CheckDominationAndAdd(pattern, pattern_treated_unfairly):
+#     to_remove = []
+#     for p in pattern_treated_unfairly:
+#         if PatternEqual(p, pattern):
+#             return
+#         if P1DominatedByP2(pattern, p):
+#             return
+#         elif P1DominatedByP2(p, pattern):
+#             to_remove.append(p)
+#     for p in to_remove:
+#         pattern_treated_unfairly.remove(p)
+#     pattern_treated_unfairly.append(pattern)
+#
 
-def CheckDominationAndAdd(pattern, pattern_treated_unfairly):
+# patterns are string
+def CheckDominationAndAdd(pattern_st, pattern_treated_unfairly, num_att):
     to_remove = []
-    for p in pattern_treated_unfairly:
-        if PatternEqual(p, pattern):
+    for st in pattern_treated_unfairly:
+        if st == pattern_st:
             return
-        if P1DominatedByP2(pattern, p):
+        if P1DominatedByP2ForStr(pattern_st, st, num_att):
             return
-        elif P1DominatedByP2(p, pattern):
-            to_remove.append(p)
-    for p in to_remove:
-        pattern_treated_unfairly.remove(p)
-    pattern_treated_unfairly.append(pattern)
-
+        elif P1DominatedByP2ForStr(st, pattern_st, num_att):
+            to_remove.append(st)
+    for st in to_remove:
+        pattern_treated_unfairly.remove(st)
+    pattern_treated_unfairly.add(pattern_st)
 
 
 
@@ -196,22 +236,19 @@ def NaiveAlg(ranked_data, attributes, Thc, alpha, k_min, k_max, time_limit):
     num_patterns_visited = 0
     pattern_treated_unfairly = []
     overtime_flag = False
-
+    num_att = len(attributes)
+    root_str = '|' * (num_att - 1)
+    root = [-1] * (len(attributes))
+    S = GenerateChildren(root, whole_data_frame, ranked_data, attributes)
+    store_children = {root_str: S}
     for k in range(k_min, k_max):
-        # print("k={}".format(k))
-        # if q in pattern_treated_unfairly:
-        #     print("q in!!")
-        # else:
-        #     print("q not in ... ")
         if overtime_flag:
             print("naive overtime, exiting the loop of k")
             break
-        result_set = []
-        root = [-1] * (len(attributes))
-        S = GenerateChildren(root, whole_data_frame, ranked_data, attributes)
+        result_set = set()
         patterns_top_kmin = pattern_count.PatternCounter(ranked_data[:k], encoded=False)
         patterns_top_kmin.parse_data()
-
+        S = store_children[root_str].copy()
         # lower bound
         while len(S) > 0:
             if time.time() - time0 > time_limit:
@@ -220,26 +257,20 @@ def NaiveAlg(ranked_data, attributes, Thc, alpha, k_min, k_max, time_limit):
                 break
             P = S.pop(0)
             st = num2string(P)
-            # if PatternEqual(P, q) and k == 12:
-            #     print("st = {}\n".format(st))
-            #     print("stop here naive alg")
-
             num_patterns_visited += 1
             whole_cardinality = pc_whole_data.pattern_count(st)
-            # print("P={}, whole size={}".format(P, whole_cardinality))
             if whole_cardinality < Thc:
                 continue
             num_top_k = patterns_top_kmin.pattern_count(st)
-            lowerbound = (whole_cardinality / data_size - alpha) * k
+            lowerbound = alpha * whole_cardinality * k / data_size  # (whole_cardinality / data_size - alpha) * k
             if num_top_k < lowerbound:
-                # if PatternEqual(P, [-1, -1, 1, -1]):
-                #     print("k={}, pattern equal = {}, num_top_k = {}".format(k, P, num_top_k))
-                CheckDominationAndAdd(P, result_set)
+                CheckDominationAndAdd(st, result_set, num_att)
             else:
-                time1 = time.time()
-                children = GenerateChildren(P, whole_data_frame, ranked_data, attributes)
-                time2 = time.time()
-                # print("time for GenerateChildren = {}".format(time2 - time1))
+                if st in store_children:
+                    children = store_children[st]
+                else:
+                    children = GenerateChildren(P, whole_data_frame, ranked_data, attributes)
+                    store_children[st] = children
                 S = children + S
                 continue
         pattern_treated_unfairly.append(result_set)

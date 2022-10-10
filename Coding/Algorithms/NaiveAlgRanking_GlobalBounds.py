@@ -119,18 +119,40 @@ def GenerateChildren(P, whole_data_frame, ranked_data, attributes):
     return children
 
 
-def CheckDominationAndAddForLowerBound(pattern, pattern_treated_unfairly):
-    to_remove = []
-    for p in pattern_treated_unfairly:
-        if PatternEqual(p, pattern):
+def P1DominatedByP2ForStr(str1, str2, num_att):
+    if str1 == str2:
+        return True
+    num_separator = num_att - 1
+    start_pos1 = 0
+    start_pos2 = 0
+    for i in range(num_separator):
+        p1 = str1.find("|", start_pos1)
+        p2 = str2.find("|", start_pos2)
+        s1 = str1[start_pos1:p1]
+        s2 = str2[start_pos2:p2]
+        if s1 != s2 and s2 != '':
+            return False
+        start_pos1 = p1 + 1
+        start_pos2 = p2 + 1
+    s1 = str1[start_pos1:]
+    s2 = str2[start_pos2:]
+    if s1 != s2 and s2 != '':
+        return False
+    return True
+
+
+def CheckDominationAndAddForLowerBound(pattern_st, pattern_treated_unfairly, num_att):
+    to_remove = set()
+    for st in pattern_treated_unfairly:
+        if st == pattern_st:
             return
-        if P1DominatedByP2(pattern, p):
+        if P1DominatedByP2ForStr(pattern_st, st, num_att):
             return
-        elif P1DominatedByP2(p, pattern):
-            to_remove.append(p)
-    for p in to_remove:
-        pattern_treated_unfairly.remove(p)
-    pattern_treated_unfairly.append(pattern)
+        elif P1DominatedByP2ForStr(st, pattern_st, num_att):
+            to_remove.add(st)
+    for st in to_remove:
+        pattern_treated_unfairly.remove(st)
+    pattern_treated_unfairly.add(pattern_st)
 
 
 
@@ -164,17 +186,20 @@ def NaiveAlg(ranked_data, attributes, Thc, Lowerbounds, k_min, k_max, time_limit
     num_patterns_visited = 0
     pattern_treated_unfairly_lowerbound = []
     overtime_flag = False
+    root = [-1] * (len(attributes))
+    num_att = len(attributes)
+    S = GenerateChildren(root, whole_data_frame, ranked_data, attributes)
+    root_str = '|' * (num_att - 1)
+    store_children = {root_str: S}
     for k in range(k_min, k_max):
         if overtime_flag:
             print("naive overtime, exiting the loop of k")
             break
         num_patterns_visited_k = 0
-        result_set_lowerbound = []
-        root = [-1] * (len(attributes))
-        S = GenerateChildren(root, whole_data_frame, ranked_data, attributes)
+        result_set_lowerbound = set()
+        S = store_children[root_str].copy()
         patterns_top_kmin = pattern_count.PatternCounter(ranked_data[:k], encoded=False)
         patterns_top_kmin.parse_data()
-
         # lower bound
         while len(S) > 0:
             if time.time() - time0 > time_limit:
@@ -190,9 +215,13 @@ def NaiveAlg(ranked_data, attributes, Thc, Lowerbounds, k_min, k_max, time_limit
                 continue
             num_top_k = patterns_top_kmin.pattern_count(st)
             if num_top_k < Lowerbounds[k - k_min]:
-                CheckDominationAndAddForLowerBound(P, result_set_lowerbound)
+                CheckDominationAndAddForLowerBound(st, result_set_lowerbound, num_att)
             else:
-                children = GenerateChildren(P, whole_data_frame, ranked_data, attributes)
+                if st in store_children:
+                    children = store_children[st]
+                else:
+                    children = GenerateChildren(P, whole_data_frame, ranked_data, attributes)
+                    store_children[st] = children
                 S = S + children
                 continue
         pattern_treated_unfairly_lowerbound.append(result_set_lowerbound)

@@ -14,7 +14,9 @@ search top-down, same as naive alg
 Otherwise:
 check stop set
 
-
+difference from 19:
+1. store_children to store children to avoid generating children of the same pattern repeatedly
+1. use string to denote patterns
 
 """
 
@@ -24,7 +26,7 @@ from itertools import combinations
 from Algorithms import pattern_count
 import time
 from Algorithms import Predict_0_20210127 as predict
-from Algorithms import NaiveAlgRanking_4_20211213 as naiveranking
+from Algorithms import NaiveAlgRanking_5_20220510 as naiveranking
 
 
 def TSatisfiesP(t, p, num_att):
@@ -135,6 +137,15 @@ def PDominatedByM(P, M):
     return False, None
 
 
+def PDominatedByMForStr(st, M, num_att):
+    for m in M:
+        if st == m:
+            continue
+        if P1DominatedByP2ForStr(st, m, num_att):
+            return True, m
+    return False, None
+
+
 """
 whole_data: the original data file 
 mis_class_data: file containing mis-classified tuples
@@ -180,28 +191,50 @@ def CheckRepeatingAndAppend(pattern, pattern_lowest_level):
     pattern_lowest_level.append(pattern)
 
 
-def CheckDominationAndAddForLowerbound(pattern, pattern_treated_unfairly):
-    to_remove = []
-    for p in pattern_treated_unfairly:
-        # if PatternEqual(p, pattern):
-        #     return
-        if P1DominatedByP2(pattern, p):
+def CheckDominationAndAddForLowerBound(pattern_st, pattern_treated_unfairly, num_att):
+    to_remove = set()
+    for st in pattern_treated_unfairly:
+        if st == pattern_st:
             return
-        elif P1DominatedByP2(p, pattern):
-            to_remove.append(p)
-    for p in to_remove:
-        pattern_treated_unfairly.remove(p)
-    pattern_treated_unfairly.append(pattern)
+        if P1DominatedByP2ForStr(pattern_st, st, num_att):
+            return
+        elif P1DominatedByP2ForStr(st, pattern_st, num_att):
+            to_remove.add(st)
+    for st in to_remove:
+        pattern_treated_unfairly.remove(st)
+    pattern_treated_unfairly.add(pattern_st)
 
 
-def CheckDominationAndAddForLowerbound_topdown_search(pattern, pattern_treated_unfairly):
+def P1DominatedByP2ForStr(str1, str2, num_att):
+    if str1 == str2:
+        return True
+    num_separator = num_att - 1
+    start_pos1 = 0
+    start_pos2 = 0
+    for i in range(num_separator):
+        p1 = str1.find("|", start_pos1)
+        p2 = str2.find("|", start_pos2)
+        s1 = str1[start_pos1:p1]
+        s2 = str2[start_pos2:p2]
+        if s1 != s2 and s2 != '':
+            return False
+        start_pos1 = p1 + 1
+        start_pos2 = p2 + 1
+    s1 = str1[start_pos1:]
+    s2 = str2[start_pos2:]
+    if s1 != s2 and s2 != '':
+        return False
+    return True
+
+
+def CheckDominationAndAddForLowerbound_topdown_search(pattern_st, pattern_treated_unfairly, num_att):
     to_remove = []
-    for p in pattern_treated_unfairly:
+    for st in pattern_treated_unfairly:
         # if PatternEqual(p, pattern):
         #     return
-        if P1DominatedByP2(pattern, p):
+        if P1DominatedByP2ForStr(pattern_st, st, num_att):
             return False
-    pattern_treated_unfairly.append(pattern)
+    pattern_treated_unfairly.add(pattern_st)
     return True
 
 
@@ -238,20 +271,6 @@ def A_is_ancestor_of_B_list(a, b, num_att):
             elif a[i] != -1:
                 return False
     return True
-
-
-def CheckDominationAndAddForLowerBound(pattern, pattern_treated_unfairly):
-    to_remove = []
-    for p in pattern_treated_unfairly:
-        if PatternEqual(p, pattern):
-            return
-        if P1DominatedByP2(pattern, p):
-            return
-        elif P1DominatedByP2(p, pattern):
-            to_remove.append(p)
-    for p in to_remove:
-        pattern_treated_unfairly.remove(p)
-    pattern_treated_unfairly.append(pattern)
 
 
 def CheckDominationAndAddForLowerbound_with_backup(pattern, pattern_treated_unfairly,
@@ -320,144 +339,142 @@ def RemoveFromBackup(pattern, dominated_by_lowerbound_result, second_backup):
     return False
 
 
-# only need to check the lower bound of parents
-# need to check patterns_should_be_in_result_set, and patterns_no_children
-def CheckCandidatesForBounds(ancestors, patterns_should_be_in_result_set,
-                             patterns_small_size, patterns_no_children,
-                             root, root_str,
-                             result_set_lowerbound, k,
-                             k_min, pc_whole_data, patterns_top_k, patterns_size_whole,
-                             Lowerbounds, num_att, whole_data_frame,
-                             attributes, num_patterns_visited, Thc):
-    to_remove_from_patterns_should_be_in_result_set = []
-    to_append_to_to_remove_from_patterns_should_be_in_result_set = []
-    checked_patterns = set()
-    # st = "|0||0|"
-    # if st in patterns_searched_lowest_level_lowerbound:
-    #     print("in CheckCandidatesForBounds, {} in stop set".format(st))
-    for st in patterns_should_be_in_result_set:  # st is a string
-        if st in checked_patterns:
-            continue
-        checked_patterns.add(st)
-        p = string2num(st)
-        # if PatternEqual(p, [-1, 0, -1, 0, -1]):
-        #     print("CheckCandidatesForBounds, p = {}".format(p))
-        if p in ancestors:  # already checked
-            continue
-        num_patterns_visited += 1
-        pattern_size_in_topk = patterns_top_k.pattern_count(st)
-        if pattern_size_in_topk >= Lowerbounds[k - k_min]:
-            if st in result_set_lowerbound:
-                result_set_lowerbound.remove(st)
-            to_remove_from_patterns_should_be_in_result_set.append(st)
-            if p[num_att - 1] == -1:
-                raise Exception("why is this pattern {} in stop set ???".format(p))
-            continue
-        # if pattern_size_in_topk < Lowerbounds[k - k_min], remove child and add this parent
-        # why do you only care about the parent generating this child, but not other parents?
-        # because other parents will be handled by the child it generates by itself
-        child_str = st
-        parent_str = findParentForStr(child_str)
-        child = p
-        if parent_str == root_str:
-            CheckDominationAndAddForLowerbound(child, result_set_lowerbound)
-            continue
-        checked_patterns.add(parent_str)
-        # if parent is not root, we need to check until 1: the root, 2: we find a node that is above the lower bound
-        # since lower bound may increase by 5, and parent is below the lower bound, grandparent may be too
-        while parent_str != root_str:
-            num_patterns_visited += 1
-            pattern_size_in_topk = patterns_top_k.pattern_count(parent_str)
-            if pattern_size_in_topk < Lowerbounds[k - k_min]:
-                child_str = parent_str
-                parent_str = findParentForStr(child_str)
-                checked_patterns.add(parent_str)
-            else:
-                CheckDominationAndAddForLowerbound(child, result_set_lowerbound)
-                if st != child_str:
-                    to_remove_from_patterns_should_be_in_result_set.append(st)
-                    to_append_to_to_remove_from_patterns_should_be_in_result_set.append(child_str)
-                break
-        if parent_str == root_str:
-            CheckDominationAndAddForLowerbound(child, result_set_lowerbound)
-            to_append_to_to_remove_from_patterns_should_be_in_result_set.append(child_str)
-            continue
-    for p_str in to_remove_from_patterns_should_be_in_result_set:
-        patterns_should_be_in_result_set.remove(p_str)
-    patterns_should_be_in_result_set = patterns_should_be_in_result_set + \
-                                       to_append_to_to_remove_from_patterns_should_be_in_result_set
-    to_remove_from_patterns_no_children = []
-    to_append_to_to_remove_from_patterns_no_children = []
-    for st in patterns_no_children:
-        if st in checked_patterns:
-            continue
-        checked_patterns.add(st)
-        p = string2num(st)
-        if p in ancestors:  # already checked
-            continue
-        num_patterns_visited += 1
-        pattern_size_in_topk = patterns_top_k.pattern_count(st)
-        if pattern_size_in_topk >= Lowerbounds[k - k_min]:
-            continue
-        child_str = st
-        parent_str = findParentForStr(child_str)
-        child = p
-        if parent_str == root_str:
-            to_remove_from_patterns_no_children.append(st)
-            CheckDominationAndAddForLowerbound(child, result_set_lowerbound)
-            patterns_should_be_in_result_set.append(st)
-            continue
-        checked_patterns.add(parent_str)
-        while parent_str != root_str:
-            num_patterns_visited += 1
-            pattern_size_in_topk = patterns_top_k.pattern_count(parent_str)
-            if pattern_size_in_topk < Lowerbounds[k - k_min]:
-                child_str = parent_str
-                parent_str = findParentForStr(child_str)
-                checked_patterns.add(parent_str)
-            else:
-                CheckDominationAndAddForLowerbound(child, result_set_lowerbound)
-                if child_str not in patterns_should_be_in_result_set:
-                    patterns_should_be_in_result_set.append(child_str)
-                to_remove_from_patterns_no_children.append(st)
-                break
-        if parent_str == root_str:
-            CheckDominationAndAddForLowerbound(child, result_set_lowerbound)
-            if child_str not in patterns_should_be_in_result_set:
-                patterns_should_be_in_result_set.append(child_str)
-            to_remove_from_patterns_no_children.append(st)
-            continue
-    for st in to_remove_from_patterns_no_children:
-        patterns_no_children.remove(st)
-    return num_patterns_visited
+# # only need to check the lower bound of parents
+# # need to check patterns_should_be_in_result_set, and patterns_no_children
+# def CheckCandidatesForBounds(ancestors, patterns_should_be_in_result_set,
+#                              patterns_small_size, patterns_no_children,
+#                              root, root_str,
+#                              result_set_lowerbound, k,
+#                              k_min, pc_whole_data, patterns_top_k, patterns_size_whole,
+#                              Lowerbounds, num_att, whole_data_frame,
+#                              attributes, num_patterns_visited, Thc):
+#     to_remove_from_patterns_should_be_in_result_set = set()
+#     to_append_to_to_remove_from_patterns_should_be_in_result_set = set()
+#     checked_patterns = set()
+#     # st = "|0||0|"
+#     # if st in patterns_searched_lowest_level_lowerbound:
+#     #     print("in CheckCandidatesForBounds, {} in stop set".format(st))
+#     for st in patterns_should_be_in_result_set:  # st is a string
+#         if st in checked_patterns:
+#             continue
+#         checked_patterns.add(st)
+#         p = string2num(st)
+#         # if PatternEqual(p, [-1, 0, -1, 0, -1]):
+#         #     print("CheckCandidatesForBounds, p = {}".format(p))
+#         if st in ancestors:  # already checked
+#             continue
+#         num_patterns_visited += 1
+#         pattern_size_in_topk = patterns_top_k.pattern_count(st)
+#         if pattern_size_in_topk >= Lowerbounds[k - k_min]:
+#             if st in result_set_lowerbound:
+#                 result_set_lowerbound.remove(st)
+#             to_remove_from_patterns_should_be_in_result_set.add(st)
+#             if p[num_att - 1] == -1:
+#                 raise Exception("why is this pattern {} in stop set ???".format(p))
+#             continue
+#         # if pattern_size_in_topk < Lowerbounds[k - k_min], remove child and add this parent
+#         # why do you only care about the parent generating this child, but not other parents?
+#         # because other parents will be handled by the child it generates by itself
+#         child_str = st
+#         parent_str = findParentForStr(child_str)
+#         child = p
+#         if parent_str == root_str:
+#             CheckDominationAndAddForLowerBound(child_str, result_set_lowerbound, num_att)
+#             continue
+#         checked_patterns.add(parent_str)
+#         # if parent is not root, we need to check until 1: the root, 2: we find a node that is above the lower bound
+#         # since lower bound may increase by 5, and parent is below the lower bound, grandparent may be too
+#         while parent_str != root_str:
+#             num_patterns_visited += 1
+#             pattern_size_in_topk = patterns_top_k.pattern_count(parent_str)
+#             if pattern_size_in_topk < Lowerbounds[k - k_min]:
+#                 child_str = parent_str
+#                 parent_str = findParentForStr(child_str)
+#                 checked_patterns.add(parent_str)
+#             else:
+#                 CheckDominationAndAddForLowerBound(child_str, result_set_lowerbound, num_att)
+#                 if st != child_str:
+#                     to_remove_from_patterns_should_be_in_result_set.add(st)
+#                     to_append_to_to_remove_from_patterns_should_be_in_result_set.add(child_str)
+#                 break
+#         if parent_str == root_str:
+#             CheckDominationAndAddForLowerBound(child_str, result_set_lowerbound, num_att)
+#             to_append_to_to_remove_from_patterns_should_be_in_result_set.add(child_str)
+#             continue
+#     for p_str in to_remove_from_patterns_should_be_in_result_set:
+#         patterns_should_be_in_result_set.remove(p_str)
+#     patterns_should_be_in_result_set = patterns_should_be_in_result_set.union(to_append_to_to_remove_from_patterns_should_be_in_result_set)
+#     to_remove_from_patterns_no_children = set()
+#     for st in patterns_no_children:
+#         if st in checked_patterns:
+#             continue
+#         checked_patterns.add(st)
+#         p = string2num(st)
+#         if st in ancestors:  # already checked
+#             continue
+#         num_patterns_visited += 1
+#         pattern_size_in_topk = patterns_top_k.pattern_count(st)
+#         if pattern_size_in_topk >= Lowerbounds[k - k_min]:
+#             continue
+#         child_str = st
+#         parent_str = findParentForStr(child_str)
+#         child = p
+#         if parent_str == root_str:
+#             to_remove_from_patterns_no_children.add(st)
+#             CheckDominationAndAddForLowerBound(child_str, result_set_lowerbound, num_att)
+#             patterns_should_be_in_result_set.append(st)
+#             continue
+#         checked_patterns.add(parent_str)
+#         while parent_str != root_str:
+#             num_patterns_visited += 1
+#             pattern_size_in_topk = patterns_top_k.pattern_count(parent_str)
+#             if pattern_size_in_topk < Lowerbounds[k - k_min]:
+#                 child_str = parent_str
+#                 parent_str = findParentForStr(child_str)
+#                 checked_patterns.add(parent_str)
+#             else:
+#                 CheckDominationAndAddForLowerBound(child_str, result_set_lowerbound, num_att)
+#                 if child_str not in patterns_should_be_in_result_set:
+#                     patterns_should_be_in_result_set.append(child_str)
+#                 to_remove_from_patterns_no_children.add(st)
+#                 break
+#         if parent_str == root_str:
+#             CheckDominationAndAddForLowerBound(child_str, result_set_lowerbound, num_att)
+#             if child_str not in patterns_should_be_in_result_set:
+#                 patterns_should_be_in_result_set.append(child_str)
+#             to_remove_from_patterns_no_children.add(st)
+#             continue
+#     for st in to_remove_from_patterns_no_children:
+#         patterns_no_children.remove(st)
+#     return num_patterns_visited
 
 
-# when bound doesn't change, check patterns_should_be_in_result_set only, don't go up
-def CheckStopSet(ancestors, patterns_should_be_in_result_set,
-                 patterns_small_size, patterns_no_children,
-                 root, root_str,
-                 result_set_lowerbound, k,
-                 k_min, pc_whole_data, patterns_top_k, patterns_size_whole,
-                 Lowerbounds, num_att, whole_data_frame,
-                 attributes, num_patterns_visited, Thc):
-    to_remove = set()
-    to_append = []
-    # st = "|0||0|"
-    # if st in patterns_searched_lowest_level_lowerbound:
-    #     print("in CheckCandidatesForBounds, {} in stop set".format(st))
-    for st in patterns_should_be_in_result_set:  # st is a string
-        p = string2num(st)
-        if p in ancestors or p in result_set_lowerbound:  # already checked
-            continue
-        num_patterns_visited += 1
-        pattern_size_in_topk = patterns_top_k.pattern_count(st)
-        if pattern_size_in_topk >= Lowerbounds[k - k_min]:
-            if p[num_att - 1] == -1:
-                raise Exception("why is this pattern {} in stop set ???".format(p))
-            continue
-        # this node is below lower bound
-        CheckDominationAndAddForLowerbound(p, result_set_lowerbound)
-    return num_patterns_visited
+# # when bound doesn't change, check patterns_should_be_in_result_set only, don't go up
+# def CheckStopSet(ancestors, patterns_should_be_in_result_set,
+#                  patterns_small_size, patterns_no_children,
+#                  root, root_str,
+#                  result_set_lowerbound, k,
+#                  k_min, pc_whole_data, patterns_top_k, patterns_size_whole,
+#                  Lowerbounds, num_att, whole_data_frame,
+#                  attributes, num_patterns_visited, Thc):
+#     to_remove = set()
+#     to_append = []
+#     # st = "|0||0|"
+#     # if st in patterns_searched_lowest_level_lowerbound:
+#     #     print("in CheckCandidatesForBounds, {} in stop set".format(st))
+#     for st in patterns_should_be_in_result_set:  # st is a string
+#         p = string2num(st)
+#         if st in ancestors or st in result_set_lowerbound:  # already checked
+#             continue
+#         num_patterns_visited += 1
+#         pattern_size_in_topk = patterns_top_k.pattern_count(st)
+#         if pattern_size_in_topk >= Lowerbounds[k - k_min]:
+#             if p[num_att - 1] == -1:
+#                 raise Exception("why is this pattern {} in stop set ???".format(p))
+#             continue
+#         # this node is below lower bound
+#         CheckDominationAndAddForLowerBound(st, result_set_lowerbound, num_att)
+#     return num_patterns_visited
 
 
 def GraphTraverse(ranked_data, attributes, Thc, Lowerbounds, k_min, k_max, time_limit):
@@ -474,17 +491,19 @@ def GraphTraverse(ranked_data, attributes, Thc, Lowerbounds, k_min, k_max, time_
     root = [-1] * num_att
     root_str = '|' * (num_att - 1)
     S = GenerateChildren(root, whole_data_frame, attributes)
+    store_children = {root_str: S}
+    S = store_children[root_str].copy()
     pattern_treated_unfairly_lowerbound = []  # looking for the most general patterns
     patterns_top_kmin = pattern_count.PatternCounter(ranked_data[:k_min], encoded=False)
     patterns_top_kmin.parse_data()
     patterns_size_whole = dict()
     k = k_min
-    result_set_lowerbound = []
+    result_set_lowerbound = set()
     # stop reasons:
     # 1. add to result set
     # 2. if size too small, add its parent
     # 3. no children
-    patterns_dominated_by_result = []  # doesn't include patterns in result set
+    patterns_dominated_by_result = set()  # doesn't include patterns in result set
     # patterns_children_small_size = []
 
     # DFS
@@ -505,13 +524,16 @@ def GraphTraverse(ranked_data, attributes, Thc, Lowerbounds, k_min, k_max, time_
             continue
         num_top_k = patterns_top_kmin.pattern_count(st)
         if num_top_k < Lowerbounds[k - k_min]:
-            if not CheckDominationAndAddForLowerbound_topdown_search(P, result_set_lowerbound):
-                patterns_dominated_by_result.append(st)
+            if not CheckDominationAndAddForLowerbound_topdown_search(st, result_set_lowerbound, num_att):
+                patterns_dominated_by_result.add(st)
         else:
             if P[num_att - 1] == -1:  # no children
-                children = GenerateChildren(P, whole_data_frame, attributes)
+                if st in store_children:
+                    children = store_children[st]
+                else:
+                    children = GenerateChildren(P, whole_data_frame, attributes)
+                    store_children[st] = children
                 S = S + children
-
 
     pattern_treated_unfairly_lowerbound.append(result_set_lowerbound)
     # print("time for k_min = {}".format(time.time() - time0))
@@ -525,12 +547,10 @@ def GraphTraverse(ranked_data, attributes, Thc, Lowerbounds, k_min, k_max, time_
         patterns_top_k.parse_data()
         new_tuple = ranked_data.iloc[[k - 1]].values.flatten().tolist()
         # print("k={}, new tuple = {}".format(k, new_tuple))
-
         if Lowerbounds[k - k_min] > Lowerbounds[k - 1 - k_min]:
-            result_set_lowerbound = []
-            patterns_dominated_by_result = []  # doesn't include patterns in result set
-            # patterns_children_small_size = []
-            S = GenerateChildren(root, whole_data_frame, attributes)
+            result_set_lowerbound = set()
+            patterns_dominated_by_result = set()  # doesn't include patterns in result set
+            S = store_children[root_str].copy()
             while len(S) > 0:
                 if time.time() - time0 > time_limit:
                     print("newalg overtime")
@@ -547,51 +567,59 @@ def GraphTraverse(ranked_data, attributes, Thc, Lowerbounds, k_min, k_max, time_
                     continue
                 num_top_k = patterns_top_k.pattern_count(st)
                 if num_top_k < Lowerbounds[k - k_min]:
-                    if not CheckDominationAndAddForLowerbound_topdown_search(P, result_set_lowerbound):
-                        patterns_dominated_by_result.append(st)
+                    if not CheckDominationAndAddForLowerbound_topdown_search(st, result_set_lowerbound, num_att):
+                        patterns_dominated_by_result.add(st)
                 else:
                     if P[num_att - 1] == -1:
-                        children = GenerateChildren(P, whole_data_frame, attributes)
+                        if st in store_children:
+                            children = store_children[st]
+                        else:
+                            children = GenerateChildren(P, whole_data_frame, attributes)
+                            store_children[st] = children
                         S = S + children
             pattern_treated_unfairly_lowerbound.append(result_set_lowerbound)
         else:
             # the bound doesn't change
             # check resul set
-            patterns_resultset_now_removed = []
+            patterns_resultset_now_removed = set()
             to_append_patterns_dominated_by_result = set()
-
             to_search_down = []
-            for p in result_set_lowerbound:
+            for st in result_set_lowerbound:
                 num_patterns_visited += 1
-                st = num2string(p)
-                if TSatisfiesP(new_tuple, p, num_att):
+                p = string2num(st)
+                if TSatisfiesP(new_tuple, p, num_att):  # FIXME
                     num_top_k = patterns_top_k.pattern_count(st)
                     if num_top_k >= Lowerbounds[k - k_min]:
-                        patterns_resultset_now_removed.append(p)
+                        patterns_resultset_now_removed.add(st)
                         if p[num_att - 1] == -1:
                             # go down from here
-                            to_search_down = to_search_down + GenerateChildren(p, whole_data_frame, attributes)
-            for p in patterns_resultset_now_removed:
-                result_set_lowerbound.remove(p)
-            to_append_to_result_set = []
+                            if st in store_children:
+                                children = store_children[st]
+                            else:
+                                children = GenerateChildren(p, whole_data_frame, attributes)
+                                store_children[st] = children
+                            to_search_down = to_search_down + children
+            for st in patterns_resultset_now_removed:
+                result_set_lowerbound.remove(st)
+            to_append_to_result_set = set()
             num_patterns_visited, to_append_patterns_dominated_by_result = \
                 GoDownForResultSet(k, patterns_top_k, result_set_lowerbound, patterns_size_whole, pc_whole_data,
                                    whole_data_frame, to_search_down,
                                    attributes, Thc, Lowerbounds[k - k_min], num_att,
                                    to_append_patterns_dominated_by_result,
-                                   num_patterns_visited, to_append_to_result_set)
-            for p in to_append_to_result_set:
-                result_set_lowerbound.append(p)
+                                   num_patterns_visited, to_append_to_result_set, store_children)
+            for st in to_append_to_result_set:
+                result_set_lowerbound.add(st)
             # don't need to check patterns_children_small_size or patterns_no_children
             # check patterns_dominated_by_result
-            to_remove_from_dominted_set = []
-            to_append = []
+            to_remove_from_dominted_set = set()
+            to_append = set()
             for st in patterns_dominated_by_result:
                 num_patterns_visited += 1
                 num_top_k = patterns_top_k.pattern_count(st)
                 p = string2num(st)
                 if num_top_k >= Lowerbounds[k - k_min]:
-                    to_remove_from_dominted_set.append(st)
+                    to_remove_from_dominted_set.add(st)
                     if p[num_att - 1] == -1:
                         num_patterns_visited2 = GoDownForDominatedByResult(p, st, k, patterns_top_k,
                                                                            result_set_lowerbound,
@@ -600,29 +628,29 @@ def GraphTraverse(ranked_data, attributes, Thc, Lowerbounds, k_min, k_max, time_
                                                                            attributes, Thc, Lowerbounds[k - k_min],
                                                                            num_att,
                                                                            patterns_dominated_by_result,
-                                                                           0, to_append)
+                                                                           0, to_append, store_children)
                         num_patterns_visited += num_patterns_visited2
-                elif PDominatedByM(p, patterns_resultset_now_removed):
-                    to_remove_from_resultset = []
+                elif PDominatedByMForStr(st, patterns_resultset_now_removed, num_att):
+                    to_remove_from_resultset = set()
                     can_add = True
                     for r in result_set_lowerbound:
-                        if P1DominatedByP2(p, r):
+                        if P1DominatedByP2ForStr(st, r, num_att):
                             can_add = False
                             break
-                        elif P1DominatedByP2(r, p):
-                            to_remove_from_resultset.append(r)
+                        elif P1DominatedByP2ForStr(r, st, num_att):
+                            to_remove_from_resultset.add(r)
                     if can_add:
-                        result_set_lowerbound.append(p)
-                        to_remove_from_dominted_set.append(st)
+                        result_set_lowerbound.add(st)
+                        to_remove_from_dominted_set.add(st)
                         for s in to_remove_from_resultset:
                             result_set_lowerbound.remove(s)
-                            to_append.append(num2string(s))
+                            to_append.add(s)
             for st in to_remove_from_dominted_set:
                 patterns_dominated_by_result.remove(st)
             for st in to_append:
-                patterns_dominated_by_result.append(st)
+                patterns_dominated_by_result.add(st)
             for st in to_append_patterns_dominated_by_result:
-                patterns_dominated_by_result.append(st)
+                patterns_dominated_by_result.add(st)
             pattern_treated_unfairly_lowerbound.append(result_set_lowerbound)
     time1 = time.time()
     return pattern_treated_unfairly_lowerbound, num_patterns_visited, time1 - time0
@@ -633,7 +661,7 @@ def GoDownForResultSet(k, patterns_top_k, result_set_lowerbound, patterns_size_w
                        whole_data_frame, to_search_down,
                        attributes, Thc, lowerbound, num_att,
                        to_append_patterns_dominated_by_result,
-                       num_patterns_visited, to_append_to_result_set):
+                       num_patterns_visited, to_append_to_result_set, store_children):
     S = to_search_down
     while len(S) > 0:
         P = S.pop(0)
@@ -649,26 +677,30 @@ def GoDownForResultSet(k, patterns_top_k, result_set_lowerbound, patterns_size_w
             dominated = False
             for r in result_set_lowerbound:
                 # r is impossible to be dominated by P
-                if P1DominatedByP2(P, r):
+                if P1DominatedByP2ForStr(st, r, num_att):
                     dominated = True
                     to_append_patterns_dominated_by_result.add(st)  # in case r is removed later
                     break
             if not dominated:
-                to_delete_from_to_append = []
+                to_delete_from_to_append = set()
                 for s in to_append_to_result_set:
-                    if P1DominatedByP2(P, s):
+                    if P1DominatedByP2ForStr(st, s, num_att):
                         dominated = True
                         to_append_patterns_dominated_by_result.add(st)
                         break
-                    elif P1DominatedByP2(s, P):
-                        to_delete_from_to_append.append(s)
+                    elif P1DominatedByP2ForStr(s, st, num_att):
+                        to_delete_from_to_append.add(s)
                 if not dominated:
-                    to_append_to_result_set.append(P)
+                    to_append_to_result_set.add(st)
                 for r in to_delete_from_to_append:
                     to_append_to_result_set.remove(r)
         else:
             if P[num_att - 1] == -1:  # no children
-                children = GenerateChildren(P, whole_data_frame, attributes)
+                if st in store_children:
+                    children = store_children[st]
+                else:
+                    children = GenerateChildren(P, whole_data_frame, attributes)
+                    store_children[st] = children
                 S = S + children
     return num_patterns_visited, to_append_patterns_dominated_by_result
 
@@ -678,8 +710,13 @@ def GoDownForDominatedByResult(p, st, k, patterns_top_k, result_set_lowerbound, 
                                whole_data_frame,
                                attributes, Thc, lowerbound, num_att,
                                patterns_dominated_by_result,
-                               num_patterns_visited, to_append):
-    S = GenerateChildren(p, whole_data_frame, attributes)
+                               num_patterns_visited, to_append, store_children):
+    if st in store_children:
+        S = store_children[st].copy()
+    else:
+        S = GenerateChildren(p, whole_data_frame, attributes)
+        store_children[st] = S
+        S = store_children[st].copy()
     while len(S) > 0:
         P = S.pop(0)
         st = num2string(P)
@@ -693,16 +730,20 @@ def GoDownForDominatedByResult(p, st, k, patterns_top_k, result_set_lowerbound, 
             continue
         num_top_k = patterns_top_k.pattern_count(st)
         if num_top_k < lowerbound:
-            if CheckDominationAndAddForLowerbound_topdown_search(P, result_set_lowerbound) is False:
-                to_append.append(st)
+            if CheckDominationAndAddForLowerbound_topdown_search(st, result_set_lowerbound, num_att) is False:
+                to_append.add(st)
         else:
             if P[num_att - 1] == -1:  # no children
-                children = GenerateChildren(P, whole_data_frame, attributes)
+                if st in store_children:
+                    children = store_children[st]
+                else:
+                    children = GenerateChildren(P, whole_data_frame, attributes)
+                    store_children[st] = children
                 S = S + children
     return num_patterns_visited
 
 
-#
+
 # #
 # # all_attributes = ['school_C', 'sex_C', 'age_C', 'address_C', 'famsize_C', 'Pstatus_C', 'Medu_C',
 # #                   'Fedu_C', 'Mjob_C', 'Fjob_C', 'reason_C', 'guardian_C', 'traveltime_C', 'studytime_C',
@@ -714,19 +755,18 @@ def GoDownForDominatedByResult(p, st, k, patterns_top_k, result_set_lowerbound, 
 # # original_data_file = r"../../InputData/StudentDataset/ForRanking_1/student-mat_cat_ranked.csv"
 # #
 #
-# all_attributes = ["age_binary","sex_binary","race_C","MarriageStatus_C","juv_fel_count_C",
-#                   "decile_score_C", "juv_misd_count_C","juv_other_count_C","priors_count_C","days_b_screening_arrest_C",
-#                   "c_days_from_compas_C","c_charge_degree_C","v_decile_score_C","start_C","end_C",
+# all_attributes = ["age_binary", "sex_binary", "race_C", "MarriageStatus_C", "juv_fel_count_C",
+#                   "decile_score_C", "juv_misd_count_C", "juv_other_count_C", "priors_count_C",
+#                   "days_b_screening_arrest_C",
+#                   "c_days_from_compas_C", "c_charge_degree_C", "v_decile_score_C", "start_C", "end_C",
 #                   "event_C"]
 #
 # # with 14 attributes, naive alg over time, new alg needs 117 s
-# selected_attributes = all_attributes[:14]
+# selected_attributes = all_attributes[:12]
 #
-#
-# #original_data_file = "../../InputData/CompasData/ForRanking/LargeDatasets/8000.csv"
+# # original_data_file = "../../InputData/CompasData/ForRanking/LargeDatasets/8000.csv"
 #
 # original_data_file = r"../../InputData/CompasData/ForRanking/LargeDatasets/compas_data_cat_necessary_att_ranked.csv"
-#
 #
 # ranked_data = pd.read_csv(original_data_file)
 # ranked_data = ranked_data[selected_attributes]
@@ -737,8 +777,6 @@ def GoDownForDominatedByResult(p, st, k, patterns_top_k, result_set_lowerbound, 
 # Thc = 50
 #
 # List_k = list(range(k_min, k_max))
-#
-#
 #
 # Lowerbounds = [10] * 10 + [20] * 10 + [30] * 10 + [40] * 10  # [lowerbound(x) for x in List_k]
 #
@@ -753,9 +791,9 @@ def GoDownForDominatedByResult(p, st, k, patterns_top_k, result_set_lowerbound, 
 #
 # print("num_patterns_visited = {}".format(num_patterns_visited))
 # print("time = {} s".format(running_time))
-# # for k in range(0, k_max - k_min):
-# #     print("k = {}, num = {}, patterns =".format(k + k_min, len(pattern_treated_unfairly_lowerbound[k])),
-# #           pattern_treated_unfairly_lowerbound[k])
+# for k in range(0, k_max - k_min):
+#     print("k = {}, num = {}, patterns =".format(k + k_min, len(pattern_treated_unfairly_lowerbound[k])),
+#           pattern_treated_unfairly_lowerbound[k])
 #
 # print("start the naive alg")
 #
@@ -769,7 +807,6 @@ def GoDownForDominatedByResult(p, st, k, patterns_top_k, result_set_lowerbound, 
 # for k in range(0, k_max - k_min):
 #     print("k = {}, num = {}, patterns =".format(k + k_min, len(pattern_treated_unfairly_lowerbound2[k])),
 #           pattern_treated_unfairly_lowerbound2[k])
-#
 #
 # k_printed = False
 # print("p in pattern_treated_unfairly_lowerbound but not in pattern_treated_unfairly_lowerbound2:")
@@ -790,5 +827,3 @@ def GoDownForDominatedByResult(p, st, k, patterns_top_k, result_set_lowerbound, 
 #                 print("k=", k + k_min)
 #                 k_printed = True
 #             print(p)
-#
-#
