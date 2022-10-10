@@ -25,8 +25,6 @@ import pandas as pd
 from itertools import combinations
 from Algorithms import pattern_count
 import time
-from Algorithms import Predict_0_20210127 as predict
-from Algorithms import NaiveAlgRanking_5_20220510 as naiveranking
 
 
 def TSatisfiesP(t, p, num_att):
