@@ -20,8 +20,6 @@ cox['race'].replace(to_replace=['African-American', 'Asian', 'Caucasian', 'Hispa
 
 selected_attributes = ["sex", "age_cat", "race"]
 
-
-
 original_data_file = r"../InputData/COMPAS_ProPublica/compas-analysis-master/cox-parsed/cox-parsed_7214rows_cat.csv"
 TP_data_file = r"../InputData/COMPAS_ProPublica/compas-analysis-master/cox-parsed/cox-parsed-TP-cat.csv"
 FP_data_file = r"../InputData/COMPAS_ProPublica/compas-analysis-master/cox-parsed/cox-parsed-FP-cat.csv"

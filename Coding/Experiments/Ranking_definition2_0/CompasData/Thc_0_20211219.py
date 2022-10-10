@@ -1,4 +1,3 @@
-
 import pandas as pd
 from Algorithms import pattern_count
 from Algorithms import WholeProcess_0_20201211 as wholeprocess
@@ -32,7 +31,6 @@ marker_size = 15
 f_size = (14, 10)
 
 
-
 def ComparePatternSets(set1, set2):
     len1 = len(set1)
     len2 = len(set2)
@@ -48,13 +46,15 @@ def ComparePatternSets(set1, set2):
             return False
     return True
 
+
 def thousands_formatter(x, pos):
-    return int(x/1000)
+    return int(x / 1000)
 
 
-all_attributes = ["age_binary","sex_binary","race_C","MarriageStatus_C","juv_fel_count_C",
-                  "decile_score_C", "juv_misd_count_C","juv_other_count_C","priors_count_C","days_b_screening_arrest_C",
-                  "c_days_from_compas_C","c_charge_degree_C","v_decile_score_C","start_C","end_C",
+all_attributes = ["age_binary", "sex_binary", "race_C", "MarriageStatus_C", "juv_fel_count_C",
+                  "decile_score_C", "juv_misd_count_C", "juv_other_count_C", "priors_count_C",
+                  "days_b_screening_arrest_C",
+                  "c_days_from_compas_C", "c_charge_degree_C", "v_decile_score_C", "start_C", "end_C",
                   "event_C"]
 
 # with 12 att, ok
@@ -62,24 +62,20 @@ all_attributes = ["age_binary","sex_binary","race_C","MarriageStatus_C","juv_fel
 # range_k can only handle 9
 selected_attributes = all_attributes[:8]
 
-
 Thc_list = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
 k_min = 10
 k_max = 50
 
 original_data_file = r"../../../../InputData/CompasData/ForRanking/LargeDatasets/compas_data_cat_necessary_att_ranked.csv"
 
-
 ranked_data = pd.read_csv(original_data_file)
 ranked_data = ranked_data[selected_attributes]
 
-time_limit = 10*60
-
+time_limit = 10 * 60
 
 List_k = list(range(k_min, k_max))
 
 alpha = 0.1
-
 
 execution_time1 = list()
 execution_time2 = list()
@@ -94,8 +90,6 @@ num_patterns_found_lowerbound = list()
 patterns_found_lowerbound = list()
 num_loops = 1
 
-
-
 for Thc in Thc_list:
     num_patterns_visited1_thc = 0
     num_patterns_visited2_thc = 0
@@ -109,11 +103,9 @@ for Thc in Thc_list:
             alpha,
             k_min, k_max, time_limit)
 
-
         print("newalg, num_patterns_visited = {}".format(num_patterns_visited1_))
         print("time = {} s, num of pattern_treated_unfairly_lowerbound = {} ".format(
             t1_, len(result1)))
-
 
         if t1_ > time_limit:
             raise Exception("new alg exceeds time limit")
@@ -140,7 +132,6 @@ for Thc in Thc_list:
                                   result2[k]) is False:
                 raise Exception("sanity check fails! k = {}".format(k + k_min))
 
-
         if l == 0:
             patterns_found_lowerbound.append(result1)
             num_patterns_found_lowerbound.append(len(result2))
@@ -154,10 +145,6 @@ for Thc in Thc_list:
     execution_time2.append(t2)
     num_patterns_visited2.append(num_patterns_visited2_thc)
 
-
-
-
-
 output_path = r'../../../../OutputData/Ranking_definition2_1/CompasData/thc.txt'
 output_file = open(output_path, "w")
 num_lines = len(execution_time1)
@@ -166,26 +153,20 @@ output_file.write("execution time\n")
 for n in range(len(Thc_list)):
     output_file.write('{} {} {}\n'.format(Thc_list[n], execution_time1[n], execution_time2[n]))
 
-
 output_file.write("\n\nnumber of patterns visited\n")
 for n in range(len(Thc_list)):
     output_file.write('{} {} {}\n'.format(Thc_list[n], num_patterns_visited1[n], num_patterns_visited2[n]))
 
-
 output_file.write("\n\nnumber of patterns found, lowerbound\n")
 for n in range(len(Thc_list)):
-    output_file.write('{} {} \n {}\n'.format(Thc_list[n], num_patterns_found_lowerbound[n], patterns_found_lowerbound[n]))
-
-
-
-
-
+    output_file.write(
+        '{} {} \n {}\n'.format(Thc_list[n], num_patterns_found_lowerbound[n], patterns_found_lowerbound[n]))
 
 fig, ax = plt.subplots(1, 1, figsize=f_size)
 plt.plot(Thc_list, execution_time1, line_style[0], color=color[0], label=label[0], linewidth=line_width,
-          markersize=marker_size)
+         markersize=marker_size)
 plt.plot(Thc_list, execution_time2, line_style[1], color=color[1], label=label[1], linewidth=line_width,
-             markersize=marker_size)
+         markersize=marker_size)
 plt.xlabel('Size threshold')
 plt.xticks(Thc_list)
 plt.ylabel('Execution time (s)')
@@ -197,16 +178,11 @@ plt.savefig("../../../../OutputData/Ranking_definition2_1/CompasData/thc_time.pn
 plt.show()
 plt.close()
 
-
-
-
-
-
 fig, ax = plt.subplots(1, 1, figsize=f_size)
 plt.plot(Thc_list, num_patterns_visited1, line_style[0], color=color[0], label=label[0], linewidth=line_width,
-          markersize=marker_size)
+         markersize=marker_size)
 plt.plot(Thc_list, num_patterns_visited2, line_style[1], color=color[1], label=label[1], linewidth=line_width,
-             markersize=marker_size)
+         markersize=marker_size)
 plt.xlabel('Size threshold')
 plt.xticks(Thc_list)
 plt.ylabel('Number of patterns visited (K)')
@@ -220,4 +196,3 @@ plt.show()
 plt.close()
 
 plt.clf()
-
