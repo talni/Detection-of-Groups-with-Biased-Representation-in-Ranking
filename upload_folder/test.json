@@ -1,0 +1,8 @@
+{
+  "selected_attributes":["sex", "age_cat", "race_factor"],
+  "threshold":50,
+  "k_min": 10,
+  "k_max": 15
+
+
+}
