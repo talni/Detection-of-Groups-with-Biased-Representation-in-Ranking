@@ -23,7 +23,7 @@ difference from 19:
 import pandas as pd
 
 from itertools import combinations
-from Algorithms import pattern_count
+from Coding.Algorithms import pattern_count
 import time
 
 

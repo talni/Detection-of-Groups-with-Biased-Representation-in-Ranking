@@ -31,7 +31,7 @@ import time
 import math
 import numpy as np
 import pandas as pd
-from Algorithms import pattern_count
+from Coding.Algorithms import pattern_count
 from sortedcontainers import SortedDict
 import cProfile
 import pstats
@@ -630,7 +630,7 @@ def GraphTraverse(ranked_data, attributes, Thc, alpha, k_min, k_max, time_limit)
     k = k_min
     while len(S) > 0:
         if time.time() - time0 > time_limit:
-            print("newalg overtime")
+            #print("newalg overtime")
             break
         time1 = time.time()
         P = S.pop(0)
@@ -678,8 +678,8 @@ def GraphTraverse(ranked_data, attributes, Thc, alpha, k_min, k_max, time_limit)
             else:
                 raise Exception("st is impossible to be in nodes_dict.keys()")
     time1 = time.time()
-    print("time for k_min = {}".format(time1 - time0))
-    print(result_set)
+    # print("time for k_min = {}".format(time1 - time0))
+    # print(result_set)
     # print(k_dict)
     # if "|||0||1||||1" in nodes_dict.keys():
     #     print("k of |||0||1||||1 = {}\n".format(nodes_dict["|||0||1||||1"].smallest_valid_k))
@@ -696,8 +696,8 @@ def GraphTraverse(ranked_data, attributes, Thc, alpha, k_min, k_max, time_limit)
         patterns_top_k = pattern_count.PatternCounter(ranked_data[:k], encoded=False)
         patterns_top_k.parse_data()
         new_tuple = ranked_data.iloc[[k - 1]].values.flatten().tolist()
-        print("k={}, new tuple = {}".format(k, new_tuple))
-        print("dominated_by_result: ", dominated_by_result)
+        # print("k={}, new tuple = {}".format(k, new_tuple))
+        # print("dominated_by_result: ", dominated_by_result)
         # top down for related patterns, using similar methods as k_min, add to result set if needed
         # ancestors are patterns checked in AddNewTuple() function, to avoid checking them again
         result_set = set(pattern_treated_unfairly[k - 1 - k_min])
@@ -727,8 +727,8 @@ def GraphTraverse(ranked_data, attributes, Thc, alpha, k_min, k_max, time_limit)
         # if "|||0||1||||1" in nodes_dict.keys():
         #     print("k of |||0||1||||1 = {}\n".format(nodes_dict["|||0||1||||1"].smallest_valid_k))
 
-        if "14|1||||65" in dominated_by_result:
-            print("{} in dominated after addnewtuple\n".format("14|1||||65"))
+        # if "14|1||||65" in dominated_by_result:
+        #     print("{} in dominated after addnewtuple\n".format("14|1||||65"))
 
         to_added_to_dominated_by_result = set()
         to_remove_from_dominated_by_result = set()
@@ -754,11 +754,11 @@ def GraphTraverse(ranked_data, attributes, Thc, alpha, k_min, k_max, time_limit)
                 dominated_by_result.remove(d)
         for d in to_added_to_dominated_by_result:
             dominated_by_result.add(d)
-        if "14|1||||65" in dominated_by_result and k == 111:
-            print("{} in dominated before k_dict\n".format("14|1||||65"))
+        # if "14|1||||65" in dominated_by_result and k == 111:
+        #     print("{} in dominated before k_dict\n".format("14|1||||65"))
         for st in k_dict[k - 1]:
-            if st == '|1||||':
-                print("hahaha\n")
+            # if st == '|1||||':
+            #     print("hahaha\n")
             if st in ancestors:
                 continue
             if st in result_set:
@@ -773,11 +773,11 @@ def GraphTraverse(ranked_data, attributes, Thc, alpha, k_min, k_max, time_limit)
         # print("time for CheckCandidatesForKValues = {}".format(time4 - time3))
         # print("result_set after CheckCandidatesForKValues: ", result_set)
         pattern_treated_unfairly.append(result_set)
-        print("result set after k={}: {}".format(k, result_set))
-        if "14|1||||65" in dominated_by_result:
-            print("{} in dominated finally\n".format("14|1||||65"))
-        if "14|1||||65" in result_set:
-            print("14|1||||65 in result set finally")
+        # print("result set after k={}: {}".format(k, result_set))
+        # if "14|1||||65" in dominated_by_result:
+        #     print("{} in dominated finally\n".format("14|1||||65"))
+        # if "14|1||||65" in result_set:
+        #     print("14|1||||65 in result set finally")
     time1 = time.time()
     return pattern_treated_unfairly, num_patterns_visited, time1 - time0
 
