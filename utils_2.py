@@ -4,7 +4,7 @@ from flask import Flask, request, render_template, redirect, flash
 from matplotlib import pyplot as plt
 from numba import typeof
 from werkzeug.utils import secure_filename
-from from_list_to_shapy_values import string2num, shapley_values_att_value_seperated, get_shaped_values, \
+from from_list_to_shapy_values import string2list, shapley_values_att_value_seperated, get_shaped_values, \
     plot_average_shap_value_of_group
 
 from Coding.Algorithms.IterTD_GlobalBounds\
@@ -20,7 +20,7 @@ def from_group_to_shape(pattern_treated_unfairly_lowerbound, ranked_data, select
     shaped_values = get_shaped_values(ranked_data, selected_attributes)
     for item in pattern_treated_unfairly_lowerbound:
         print("******************", count)
-        group = string2num(item)
+        group = string2list(item)
         fig, axis = plt.subplots(1, 1,figsize=(14, 7))
         shaped_values_per_group = plot_average_shap_value_of_group(
             ranked_data, group, selected_attributes, selected_attributes, shaped_values, axis)
@@ -28,4 +28,5 @@ def from_group_to_shape(pattern_treated_unfairly_lowerbound, ranked_data, select
         print("_______: ",ans_temp)
         ans[count] = ans_temp
         count = count + 1
-    return ans;
+    return ans
+

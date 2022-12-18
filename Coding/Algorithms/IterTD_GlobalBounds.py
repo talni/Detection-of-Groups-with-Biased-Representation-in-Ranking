@@ -1,30 +1,39 @@
 """
-New algorithm for group detection in ranking
-fairness definition: the number of a group members in top-k is bounded by U_k, L_k, k_min <= k
-bounds for different k can be different, but all patterns have the same bounds
-This is the final algorithm for this fairness definition in ranking
-
-
-Go top-down, find two result sets: for lower bound
-For lower bound: most general pattern
-
-For case when bound changes:
-search top-down, same as naive alg
-
-Otherwise:
-check stop set
-
-difference from 19:
-1. store_children to store children to avoid generating children of the same pattern repeatedly
-1. use string to denote patterns
+full copy from NewAlgRanking_20_20220510.py
 
 """
 
 import pandas as pd
 
-from itertools import combinations
 from Coding.Algorithms import pattern_count
 import time
+
+def string2list(st):
+    p = list()
+    idx = 0
+    item = ''
+    i = ''
+    for i in st:
+        if i == '|':
+            if item == '':
+                p.append(-1)
+            else:
+                if item.isnumeric():
+                    p.append(int(item))
+                else:
+                    p.append(item)
+                item = ''
+            idx += 1
+        else:
+            item += i
+    if i != '|':
+        if item.isnumeric():
+            p.append(int(item))
+        else:
+            p.append(item)
+    else:
+        p.append(-1)
+    return p
 
 
 def TSatisfiesP(t, p, num_att):
@@ -75,7 +84,7 @@ def GenerateChildrenRelatedToTuple(P, new_tuple):
     return children
 
 
-def GenerateChildren(P, whole_data_frame, attributes):
+def GenerateChildren(P, whole_data_frame, ranked_data, attributes):
     children = []
     length = len(P)
     i = 0
@@ -85,11 +94,17 @@ def GenerateChildren(P, whole_data_frame, attributes):
     if P[i] == -1:
         i -= 1
     for j in range(i + 1, length, 1):
-        for a in range(int(whole_data_frame[attributes[j]]['min']), int(whole_data_frame[attributes[j]]['max']) + 1):
+        all_values = ranked_data[attributes[j]].unique()
+        for a in all_values:
             s = P.copy()
             s[j] = a
             children.append(s)
+        # for a in range(int(whole_data_frame[attributes[j]]['min']), int(whole_data_frame[attributes[j]]['max']) + 1):
+        #     s = P.copy()
+        #     s[j] = a
+        #     children.append(s)
     return children
+
 
 
 def num2string(pattern):
@@ -337,146 +352,9 @@ def RemoveFromBackup(pattern, dominated_by_lowerbound_result, second_backup):
     return False
 
 
-# # only need to check the lower bound of parents
-# # need to check patterns_should_be_in_result_set, and patterns_no_children
-# def CheckCandidatesForBounds(ancestors, patterns_should_be_in_result_set,
-#                              patterns_small_size, patterns_no_children,
-#                              root, root_str,
-#                              result_set_lowerbound, k,
-#                              k_min, pc_whole_data, patterns_top_k, patterns_size_whole,
-#                              Lowerbounds, num_att, whole_data_frame,
-#                              attributes, num_patterns_visited, Thc):
-#     to_remove_from_patterns_should_be_in_result_set = set()
-#     to_append_to_to_remove_from_patterns_should_be_in_result_set = set()
-#     checked_patterns = set()
-#     # st = "|0||0|"
-#     # if st in patterns_searched_lowest_level_lowerbound:
-#     #     print("in CheckCandidatesForBounds, {} in stop set".format(st))
-#     for st in patterns_should_be_in_result_set:  # st is a string
-#         if st in checked_patterns:
-#             continue
-#         checked_patterns.add(st)
-#         p = string2num(st)
-#         # if PatternEqual(p, [-1, 0, -1, 0, -1]):
-#         #     print("CheckCandidatesForBounds, p = {}".format(p))
-#         if st in ancestors:  # already checked
-#             continue
-#         num_patterns_visited += 1
-#         pattern_size_in_topk = patterns_top_k.pattern_count(st)
-#         if pattern_size_in_topk >= Lowerbounds[k - k_min]:
-#             if st in result_set_lowerbound:
-#                 result_set_lowerbound.remove(st)
-#             to_remove_from_patterns_should_be_in_result_set.add(st)
-#             if p[num_att - 1] == -1:
-#                 raise Exception("why is this pattern {} in stop set ???".format(p))
-#             continue
-#         # if pattern_size_in_topk < Lowerbounds[k - k_min], remove child and add this parent
-#         # why do you only care about the parent generating this child, but not other parents?
-#         # because other parents will be handled by the child it generates by itself
-#         child_str = st
-#         parent_str = findParentForStr(child_str)
-#         child = p
-#         if parent_str == root_str:
-#             CheckDominationAndAddForLowerBound(child_str, result_set_lowerbound, num_att)
-#             continue
-#         checked_patterns.add(parent_str)
-#         # if parent is not root, we need to check until 1: the root, 2: we find a node that is above the lower bound
-#         # since lower bound may increase by 5, and parent is below the lower bound, grandparent may be too
-#         while parent_str != root_str:
-#             num_patterns_visited += 1
-#             pattern_size_in_topk = patterns_top_k.pattern_count(parent_str)
-#             if pattern_size_in_topk < Lowerbounds[k - k_min]:
-#                 child_str = parent_str
-#                 parent_str = findParentForStr(child_str)
-#                 checked_patterns.add(parent_str)
-#             else:
-#                 CheckDominationAndAddForLowerBound(child_str, result_set_lowerbound, num_att)
-#                 if st != child_str:
-#                     to_remove_from_patterns_should_be_in_result_set.add(st)
-#                     to_append_to_to_remove_from_patterns_should_be_in_result_set.add(child_str)
-#                 break
-#         if parent_str == root_str:
-#             CheckDominationAndAddForLowerBound(child_str, result_set_lowerbound, num_att)
-#             to_append_to_to_remove_from_patterns_should_be_in_result_set.add(child_str)
-#             continue
-#     for p_str in to_remove_from_patterns_should_be_in_result_set:
-#         patterns_should_be_in_result_set.remove(p_str)
-#     patterns_should_be_in_result_set = patterns_should_be_in_result_set.union(to_append_to_to_remove_from_patterns_should_be_in_result_set)
-#     to_remove_from_patterns_no_children = set()
-#     for st in patterns_no_children:
-#         if st in checked_patterns:
-#             continue
-#         checked_patterns.add(st)
-#         p = string2num(st)
-#         if st in ancestors:  # already checked
-#             continue
-#         num_patterns_visited += 1
-#         pattern_size_in_topk = patterns_top_k.pattern_count(st)
-#         if pattern_size_in_topk >= Lowerbounds[k - k_min]:
-#             continue
-#         child_str = st
-#         parent_str = findParentForStr(child_str)
-#         child = p
-#         if parent_str == root_str:
-#             to_remove_from_patterns_no_children.add(st)
-#             CheckDominationAndAddForLowerBound(child_str, result_set_lowerbound, num_att)
-#             patterns_should_be_in_result_set.append(st)
-#             continue
-#         checked_patterns.add(parent_str)
-#         while parent_str != root_str:
-#             num_patterns_visited += 1
-#             pattern_size_in_topk = patterns_top_k.pattern_count(parent_str)
-#             if pattern_size_in_topk < Lowerbounds[k - k_min]:
-#                 child_str = parent_str
-#                 parent_str = findParentForStr(child_str)
-#                 checked_patterns.add(parent_str)
-#             else:
-#                 CheckDominationAndAddForLowerBound(child_str, result_set_lowerbound, num_att)
-#                 if child_str not in patterns_should_be_in_result_set:
-#                     patterns_should_be_in_result_set.append(child_str)
-#                 to_remove_from_patterns_no_children.add(st)
-#                 break
-#         if parent_str == root_str:
-#             CheckDominationAndAddForLowerBound(child_str, result_set_lowerbound, num_att)
-#             if child_str not in patterns_should_be_in_result_set:
-#                 patterns_should_be_in_result_set.append(child_str)
-#             to_remove_from_patterns_no_children.add(st)
-#             continue
-#     for st in to_remove_from_patterns_no_children:
-#         patterns_no_children.remove(st)
-#     return num_patterns_visited
-
-
-# # when bound doesn't change, check patterns_should_be_in_result_set only, don't go up
-# def CheckStopSet(ancestors, patterns_should_be_in_result_set,
-#                  patterns_small_size, patterns_no_children,
-#                  root, root_str,
-#                  result_set_lowerbound, k,
-#                  k_min, pc_whole_data, patterns_top_k, patterns_size_whole,
-#                  Lowerbounds, num_att, whole_data_frame,
-#                  attributes, num_patterns_visited, Thc):
-#     to_remove = set()
-#     to_append = []
-#     # st = "|0||0|"
-#     # if st in patterns_searched_lowest_level_lowerbound:
-#     #     print("in CheckCandidatesForBounds, {} in stop set".format(st))
-#     for st in patterns_should_be_in_result_set:  # st is a string
-#         p = string2num(st)
-#         if st in ancestors or st in result_set_lowerbound:  # already checked
-#             continue
-#         num_patterns_visited += 1
-#         pattern_size_in_topk = patterns_top_k.pattern_count(st)
-#         if pattern_size_in_topk >= Lowerbounds[k - k_min]:
-#             if p[num_att - 1] == -1:
-#                 raise Exception("why is this pattern {} in stop set ???".format(p))
-#             continue
-#         # this node is below lower bound
-#         CheckDominationAndAddForLowerBound(st, result_set_lowerbound, num_att)
-#     return num_patterns_visited
 
 
 def GraphTraverse(ranked_data, attributes, Thc, Lowerbounds, k_min, k_max, time_limit):
-    # print("attributes:", attributes)
     time0 = time.time()
 
     pc_whole_data = pattern_count.PatternCounter(ranked_data, encoded=False)
@@ -488,7 +366,7 @@ def GraphTraverse(ranked_data, attributes, Thc, Lowerbounds, k_min, k_max, time_
     num_att = len(attributes)
     root = [-1] * num_att
     root_str = '|' * (num_att - 1)
-    S = GenerateChildren(root, whole_data_frame, attributes)
+    S = GenerateChildren(root, whole_data_frame, ranked_data, attributes)
     store_children = {root_str: S}
     S = store_children[root_str].copy()
     pattern_treated_unfairly_lowerbound = []  # looking for the most general patterns
@@ -529,7 +407,7 @@ def GraphTraverse(ranked_data, attributes, Thc, Lowerbounds, k_min, k_max, time_
                 if st in store_children:
                     children = store_children[st]
                 else:
-                    children = GenerateChildren(P, whole_data_frame, attributes)
+                    children = GenerateChildren(P, whole_data_frame, ranked_data, attributes)
                     store_children[st] = children
                 S = S + children
 
@@ -572,7 +450,7 @@ def GraphTraverse(ranked_data, attributes, Thc, Lowerbounds, k_min, k_max, time_
                         if st in store_children:
                             children = store_children[st]
                         else:
-                            children = GenerateChildren(P, whole_data_frame, attributes)
+                            children = GenerateChildren(P, whole_data_frame, ranked_data, attributes)
                             store_children[st] = children
                         S = S + children
             pattern_treated_unfairly_lowerbound.append(result_set_lowerbound)
@@ -585,7 +463,7 @@ def GraphTraverse(ranked_data, attributes, Thc, Lowerbounds, k_min, k_max, time_
             for st in result_set_lowerbound:
                 num_patterns_visited += 1
                 p = string2num(st)
-                if TSatisfiesP(new_tuple, p, num_att):  # FIXME
+                if TSatisfiesP(new_tuple, p, num_att):
                     num_top_k = patterns_top_k.pattern_count(st)
                     if num_top_k >= Lowerbounds[k - k_min]:
                         patterns_resultset_now_removed.add(st)
@@ -594,7 +472,7 @@ def GraphTraverse(ranked_data, attributes, Thc, Lowerbounds, k_min, k_max, time_
                             if st in store_children:
                                 children = store_children[st]
                             else:
-                                children = GenerateChildren(p, whole_data_frame, attributes)
+                                children = GenerateChildren(p, whole_data_frame, ranked_data, attributes)
                                 store_children[st] = children
                             to_search_down = to_search_down + children
             for st in patterns_resultset_now_removed:
@@ -605,7 +483,7 @@ def GraphTraverse(ranked_data, attributes, Thc, Lowerbounds, k_min, k_max, time_
                                    whole_data_frame, to_search_down,
                                    attributes, Thc, Lowerbounds[k - k_min], num_att,
                                    to_append_patterns_dominated_by_result,
-                                   num_patterns_visited, to_append_to_result_set, store_children)
+                                   num_patterns_visited, to_append_to_result_set, store_children, ranked_data)
             for st in to_append_to_result_set:
                 result_set_lowerbound.add(st)
             # don't need to check patterns_children_small_size or patterns_no_children
@@ -626,7 +504,7 @@ def GraphTraverse(ranked_data, attributes, Thc, Lowerbounds, k_min, k_max, time_
                                                                            attributes, Thc, Lowerbounds[k - k_min],
                                                                            num_att,
                                                                            patterns_dominated_by_result,
-                                                                           0, to_append, store_children)
+                                                                           0, to_append, store_children, ranked_data)
                         num_patterns_visited += num_patterns_visited2
                 elif PDominatedByMForStr(st, patterns_resultset_now_removed, num_att):
                     to_remove_from_resultset = set()
@@ -651,7 +529,7 @@ def GraphTraverse(ranked_data, attributes, Thc, Lowerbounds, k_min, k_max, time_
                 patterns_dominated_by_result.add(st)
             pattern_treated_unfairly_lowerbound.append(result_set_lowerbound)
     time1 = time.time()
-    return pattern_treated_unfairly_lowerbound, num_patterns_visited, time1 - time0
+    return pattern_treated_unfairly_lowerbound, num_patterns_visited, time1 - time0, patterns_size_whole
 
 
 # go down to p's all descendants
@@ -659,7 +537,7 @@ def GoDownForResultSet(k, patterns_top_k, result_set_lowerbound, patterns_size_w
                        whole_data_frame, to_search_down,
                        attributes, Thc, lowerbound, num_att,
                        to_append_patterns_dominated_by_result,
-                       num_patterns_visited, to_append_to_result_set, store_children):
+                       num_patterns_visited, to_append_to_result_set, store_children, ranked_data):
     S = to_search_down
     while len(S) > 0:
         P = S.pop(0)
@@ -697,7 +575,7 @@ def GoDownForResultSet(k, patterns_top_k, result_set_lowerbound, patterns_size_w
                 if st in store_children:
                     children = store_children[st]
                 else:
-                    children = GenerateChildren(P, whole_data_frame, attributes)
+                    children = GenerateChildren(P, whole_data_frame, ranked_data, attributes)
                     store_children[st] = children
                 S = S + children
     return num_patterns_visited, to_append_patterns_dominated_by_result
@@ -708,11 +586,11 @@ def GoDownForDominatedByResult(p, st, k, patterns_top_k, result_set_lowerbound, 
                                whole_data_frame,
                                attributes, Thc, lowerbound, num_att,
                                patterns_dominated_by_result,
-                               num_patterns_visited, to_append, store_children):
+                               num_patterns_visited, to_append, store_children, ranked_data):
     if st in store_children:
         S = store_children[st].copy()
     else:
-        S = GenerateChildren(p, whole_data_frame, attributes)
+        S = GenerateChildren(p, whole_data_frame, ranked_data, attributes)
         store_children[st] = S
         S = store_children[st].copy()
     while len(S) > 0:
@@ -735,93 +613,53 @@ def GoDownForDominatedByResult(p, st, k, patterns_top_k, result_set_lowerbound, 
                 if st in store_children:
                     children = store_children[st]
                 else:
-                    children = GenerateChildren(P, whole_data_frame, attributes)
+                    children = GenerateChildren(P, whole_data_frame, ranked_data, attributes)
                     store_children[st] = children
                 S = S + children
     return num_patterns_visited
 
 
 
-# #
-# # all_attributes = ['school_C', 'sex_C', 'age_C', 'address_C', 'famsize_C', 'Pstatus_C', 'Medu_C',
-# #                   'Fedu_C', 'Mjob_C', 'Fjob_C', 'reason_C', 'guardian_C', 'traveltime_C', 'studytime_C',
-# #                   'failures_C', 'schoolsup_C', 'famsup_C', 'paid_C', 'activities_C', 'nursery_C', 'higher_C',
-# #                   'internet_C', 'romantic_C', 'famrel_C', 'freetime_C', 'goout_C', 'Dalc_C', 'Walc_C',
-# #                   'health_C', 'absences_C', 'G1_C', 'G2_C', 'G3_C']
-# #
-# #
-# # original_data_file = r"../../InputData/StudentDataset/ForRanking_1/student-mat_cat_ranked.csv"
-# #
+############################################ Example ##################################################
 #
-# all_attributes = ["age_binary", "sex_binary", "race_C", "MarriageStatus_C", "juv_fel_count_C",
-#                   "decile_score_C", "juv_misd_count_C", "juv_other_count_C", "priors_count_C",
-#                   "days_b_screening_arrest_C",
-#                   "c_days_from_compas_C", "c_charge_degree_C", "v_decile_score_C", "start_C", "end_C",
-#                   "event_C"]
+# all_attributes = ['school_C', 'sex_C', 'age_C', 'address_C', 'famsize_C', 'Pstatus_C', 'Medu_C',
+#                       'Fedu_C', 'Mjob_C', 'Fjob_C', 'reason_C', 'guardian_C', 'traveltime_C', 'studytime_C',
+#                       'failures_C', 'schoolsup_C', 'famsup_C', 'paid_C', 'activities_C', 'nursery_C', 'higher_C',
+#                       'internet_C', 'romantic_C', 'famrel_C', 'freetime_C', 'goout_C', 'Dalc_C', 'Walc_C',
+#                       'health_C', 'absences_C', 'G1_C', 'G2_C', 'G3_C']
 #
-# # with 14 attributes, naive alg over time, new alg needs 117 s
-# selected_attributes = all_attributes[:12]
+# all_attributes_original = ['student\'s school', 'student\'s sex', 'student\'s age',
+#                   'student\'s home address type', 'family size', 'parent\'s cohabitation status',
+#                   'mother\'s education', 'father\'s education', 'mother\'s job',
+#                   'father\'s job', 'reason to choose this school', 'student\'s guardian',
+#                   'home to school travel time', 'weekly study time', 'number of past class failures',
+#                   'extra educational support', 'family educational support', 'extra paid classes within the course subject',
+#                   'extra-curricular activities', 'attended nursery school', 'wants to take higher education',
+#                   'Internet access at home', 'with a romantic relationship', 'quality of family relationships',
+#                   'free time after school', 'going out with friends', 'workday alcohol consumption',
+#                   'weekend alcohol consumption', 'current health status', 'number of school absences',
+#                   'first period grade', 'second period grade', 'final grade']
 #
-# # original_data_file = "../../InputData/CompasData/ForRanking/LargeDatasets/8000.csv"
 #
-# original_data_file = r"../../InputData/CompasData/ForRanking/LargeDatasets/compas_data_cat_necessary_att_ranked.csv"
+# original_data_file = r"../../InputData/StudentDataset/ForRanking_1/student-mat_cat_ranked.csv"
 #
-# ranked_data = pd.read_csv(original_data_file)
-# ranked_data = ranked_data[selected_attributes]
+# ranked_data = pd.read_csv(original_data_file, index_col=False)
 #
-# time_limit = 10 * 60
-# k_min = 10
-# k_max = 50
-# Thc = 50
+# selected_attributes = all_attributes[:16]
 #
-# List_k = list(range(k_min, k_max))
+# k = 49
+# k_min = k
+# k_max = k
+# thc = 50
+# Lowerbounds = [20]
+# time_limit = 5*60
+# result_global_bounds, num_patterns_visited1_, t1_ \
+#     = GraphTraverse(
+#     ranked_data[selected_attributes].copy(deep=True), selected_attributes, thc,
+#     Lowerbounds,
+#     k_min, k_max, time_limit)
+# print(result_global_bounds)
+# groups_global_bounds = result_global_bounds[0]
+# print(len(groups_global_bounds))
+# print([string2list(s) for s in groups_global_bounds])
 #
-# Lowerbounds = [10] * 10 + [20] * 10 + [30] * 10 + [40] * 10  # [lowerbound(x) for x in List_k]
-#
-# print(Lowerbounds)
-#
-# print("start the new alg")
-#
-# pattern_treated_unfairly_lowerbound, num_patterns_visited, running_time = \
-#     GraphTraverse(ranked_data, selected_attributes, Thc,
-#                   Lowerbounds,
-#                   k_min, k_max, time_limit)
-#
-# print("num_patterns_visited = {}".format(num_patterns_visited))
-# print("time = {} s".format(running_time))
-# for k in range(0, k_max - k_min):
-#     print("k = {}, num = {}, patterns =".format(k + k_min, len(pattern_treated_unfairly_lowerbound[k])),
-#           pattern_treated_unfairly_lowerbound[k])
-#
-# print("start the naive alg")
-#
-# pattern_treated_unfairly_lowerbound2, \
-# num_patterns_visited2, running_time2 = naiveranking.NaiveAlg(ranked_data, selected_attributes, Thc,
-#                                                              Lowerbounds,
-#                                                              k_min, k_max, time_limit)
-#
-# print("num_patterns_visited = {}".format(num_patterns_visited2))
-# print("time = {} s".format(running_time2))
-# for k in range(0, k_max - k_min):
-#     print("k = {}, num = {}, patterns =".format(k + k_min, len(pattern_treated_unfairly_lowerbound2[k])),
-#           pattern_treated_unfairly_lowerbound2[k])
-#
-# k_printed = False
-# print("p in pattern_treated_unfairly_lowerbound but not in pattern_treated_unfairly_lowerbound2:")
-# for k in range(0, k_max - k_min):
-#     for p in pattern_treated_unfairly_lowerbound[k]:
-#         if p not in pattern_treated_unfairly_lowerbound2[k]:
-#             if k_printed is False:
-#                 print("k=", k + k_min)
-#                 k_printed = True
-#             print(p)
-#
-# k_printed = False
-# print("p in pattern_treated_unfairly_lowerbound2 but not in pattern_treated_unfairly_lowerbound:")
-# for k in range(0, k_max - k_min):
-#     for p in pattern_treated_unfairly_lowerbound2[k]:
-#         if p not in pattern_treated_unfairly_lowerbound[k]:
-#             if k_printed is False:
-#                 print("k=", k + k_min)
-#                 k_printed = True
-#             print(p)

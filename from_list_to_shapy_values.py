@@ -44,13 +44,8 @@ marker_size = 20
 FONTSIZE = 50
 
 
-def string2num(st):
-    st = list(st)
-    #print("-------------------in string2num print st: ", st)
-    st = "".join(st)
-    #print("-------------------in string2num print st: ",st)
-    #print(typeof(st))
-    #print("-------------------in string2num print st: ", st)
+
+def string2list(st):
     p = list()
     idx = 0
     item = ''
@@ -60,13 +55,19 @@ def string2num(st):
             if item == '':
                 p.append(-1)
             else:
-                p.append(int(item))
+                if item.isnumeric():
+                    p.append(int(item))
+                else:
+                    p.append(item)
                 item = ''
             idx += 1
         else:
             item += i
     if i != '|':
-        p.append(int(item))
+        if item.isnumeric():
+            p.append(int(item))
+        else:
+            p.append(item)
     else:
         p.append(-1)
     return p
@@ -83,7 +84,6 @@ def P1DominatedByP2(P1, P2):
                 return False
     return True
 
-
 def idx_of_tuples_in_group(group, data):
     def belong_to_group(row):
         nonlocal group
@@ -91,10 +91,8 @@ def idx_of_tuples_in_group(group, data):
             return True
         else:
             return False
-
     data["in"] = data.apply(belong_to_group, axis=1)
     return data[data["in"] == True].index
-
 
 def average_shapley_values_of_group(data, group, all_attributes, shap_values):
     # get all tuples in this group
@@ -105,18 +103,7 @@ def average_shapley_values_of_group(data, group, all_attributes, shap_values):
         print("group {} size {}".format(group, len(tuples_idx)))
         return []
     else:
-        # print(tuples_idx, len(tuples_idx))
-        # for id in tuples_idx:
-        #     print(id, shap_values.values[id])
-        check_avg = 0
-        for k in tuples_idx:
-            check_avg += shap_values.values[k]
-        print("check shap values = {}".format(check_avg / len(tuples_idx)))
-
         avg = np.average(shap_values.values[tuples_idx], axis=0)
-        # print(np.sum(shap_values.values[tuples_idx], axis=0))
-        # output_file.write("\ngroup {} size {}\n".format(group, len(tuples_idx)))
-        # output_file.write(str(avg))
         print("group {} size {}".format(group, len(tuples_idx)))
         # print(avg)
         return list(avg)
@@ -132,7 +119,6 @@ def idx_of_tuples_in_group_w_attribute(group, data, att, value):
                 return False
         else:
             return False
-
     data["in"] = data.apply(belong_to_group, axis=1)
     idx = data[data["in"] == True].index
     data.drop(columns=["in"], axis=1, inplace=True)
@@ -153,115 +139,48 @@ def shapley_values_att_value_seperated(data, group, all_attributes, shap_values,
                 values_of_group = shap_values.values[tuples_idx]
                 avg = np.average(values_of_group, axis=0)
                 print("group {} att {} = {} size {}\n avg {}".format(group, att, v, len(tuples_idx), avg))
-                output_file.write(
-                    "group {} att {} = {} size {} avg {}\n".format(group, att, v, len(tuples_idx), avg[att_idx]))
+                output_file.write("group {} att {} = {} size {} avg {}\n".format(group, att, v, len(tuples_idx), avg[att_idx]))
         att_idx += 1
-
 
 def tuples_in_group(g, data, selected_attributes):
     tuple_idx = idx_of_tuples_in_group(g, data[selected_attributes].copy(deep=True))
     tuples = data.iloc[tuple_idx]
     return tuples
 
-
 def tuples_not_in_group(g, data, selected_attributes):
     tuple_idx = idx_of_tuples_in_group(g, data[selected_attributes].copy(deep=True))
     return data.drop(tuple_idx)
 
 
-def check_another_group_global_bounds(g, data, selected_attributes, thc, Lowerbounds, k):
-    size_whole_data = len(tuples_in_group(g, data, selected_attributes))
-    if size_whole_data < thc:
-        print("group g size too small", size_whole_data)
-        return False
-    size_topk = len(tuples_in_group(g, data[:k], selected_attributes))
-    if size_topk < Lowerbounds[0]:
-        print("group g doesn't have enough representation in top k", size_topk)
-        return False
-    return True
 
 
-def check_another_group_prop_bounds(g, data, selected_attributes, thc, alpha, k):
-    size_whole_data = len(tuples_in_group(g, data, selected_attributes))
-    if size_whole_data < thc:
-        print("group g size too small", size_whole_data)
-        return False
-    size_topk = len(tuples_in_group(g, data[:k], selected_attributes))
-    lowerbound = alpha * size_whole_data * k / len(data)
-    print(size_whole_data, size_topk, lowerbound)
-    if size_topk < lowerbound:
-        print("group g doesn't have enough representation in top k", size_topk)
-        return False
-    return True
-
-# TODO : cheak, I added selected_attributes to params
-def plot_distribution_number(ranked_data, attribute, group, another_group, k,selected_attributes):
+def plot_distribution_ratio(ranked_data, attribute, selected_attributes, original_att, group, group_name, k, axis):
     x_list = ranked_data[attribute].unique()
     x_list.sort()
-    tuples = tuples_in_group(group, ranked_data, selected_attributes)
-    s = tuples[attribute].value_counts().sort_index()
-    group_value_dis = [s[i] if i in s else 0 for i in x_list]
-    s = ranked_data[attribute].value_counts().sort_index()
-    whole_data_dis = [s[i] if i in s else 0 for i in x_list]
-    s = tuples_not_in_group(group, ranked_data, selected_attributes)[attribute].value_counts().sort_index()
-    other_data_dis = [s[i] if i in s else 0 for i in x_list]
-    s = tuples_in_group(another_group, ranked_data, selected_attributes)[attribute].value_counts().sort_index()
-    total = sum(s)
-    another_group_dis = [s[i] if i in s else 0 for i in x_list]
-
-    s = ranked_data[:k][attribute].value_counts().sort_index()
-    topkdis = [s[i] if i in s else 0 for i in x_list]
-
-    index = np.arange(len(x_list))
-    bar_width = 0.2
-
-    fig, ax = plt.subplots(1, 1, figsize=(20, 8))
-
-    index = np.arange(len(x_list))
-    plt.bar(index, group_value_dis, bar_width, color=color[0], label="group")
-    plt.bar(index + bar_width, whole_data_dis, bar_width, color=color[2], label="whole data")
-    plt.bar(index + bar_width * 2, other_data_dis, bar_width, color=color[4], label="other data")
-    plt.bar(index + bar_width * 3, another_group_dis, bar_width, color=color[6], label="non-problematic group")
-    plt.bar(index + bar_width * 4, topkdis, bar_width, color=color[8], label="topk")
-    # plt.xticks(index + bar_width, x_list)
-    # plt.xticks(index, x_list)
-
-    plt.ylabel('number of tuples')
-    plt.xlabel('value of attribute ' + attribute)
-    # plt.yscale('log')
-    plt.legend(loc='best', fontsize=25)
-
-    plt.tight_layout()
-    # plt.savefig("adult_time.png", bbox_inches='tight')
-    plt.show()
-
-# TODO : cheak, I added selected_attributes to params
-def plot_distribution_ratio(ranked_data, attribute, original_att, group, group_name, k, axis, selected_attributes):
-    x_list = ranked_data[attribute].unique()
-    x_list.sort()
-    print(x_list)
+    print("unique values of {} = {}".format(attribute, x_list))
 
     tuples = tuples_in_group(group, ranked_data, selected_attributes)
+    print("num of tuples in group {} = {}".format(len(tuples), group))
     s = tuples[attribute].value_counts().sort_index()
     total = sum(s)
-    group_value_dis = [s[i] / total if i in s else 0 for i in x_list]
+    group_value_dis = [s[i]/total if i in s else 0 for i in x_list]
 
     s = ranked_data[:k][attribute].value_counts().sort_index()
     total = sum(s)
-    topkdis = [s[i] / total if i in s else 0 for i in x_list]
+    topkdis = [s[i]/total if i in s else 0 for i in x_list]
 
     bar_width = 0.45
     index = np.arange(len(x_list))
     print(index)
     axis.bar(index, group_value_dis, bar_width, color=color[3], label=group_name)
-    axis.bar(index + bar_width, topkdis, bar_width, color=color[7], label="top-k")
+    axis.bar(index + bar_width, topkdis, bar_width,  color=color[7], label="top-k")
     # plt.xticks(index + bar_width, x_list)
     # plt.xticks(range(x_list[0], x_list[-1]+1))
     index2 = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18]
-    axis.set_xticks([x + bar_width / 2 for x in index2], [0, 4, 6, 8, 10, 12, 14, 16, 18, 20], fontsize=FONTSIZE)
+    axis.set_xticks([x + bar_width/2 for x in index2], [0, 4, 6, 8, 10, 12, 14, 16, 18, 20], fontsize=FONTSIZE)
     axis.set_yticks([0, 0.1, 0.2, 0.3], [0, 0.1, 0.2, 0.3], fontsize=FONTSIZE)
     axis.set_ylabel('Proportion', fontsize=FONTSIZE)
-    axis.set_xlabel('Value of ' + original_att, fontsize=FONTSIZE)
+    axis.set_xlabel('Value of '+ original_att, fontsize=FONTSIZE)
     axis.legend(loc='upper left', fontsize=40, bbox_to_anchor=(-0.02, 1.04))
     # plt.tight_layout()
     # plt.savefig("adult_time.png", bbox_inches='tight')
@@ -269,34 +188,25 @@ def plot_distribution_ratio(ranked_data, attribute, original_att, group, group_n
     return axis
 
 
+
 def plot_average_shap_value_of_group(data, group, selected_attributes, all_attributes_original, shap_values, axis):
     s = average_shapley_values_of_group(data, group, selected_attributes, shap_values)
+    df=pd.DataFrame({'Attribute':all_attributes_original, 'Shapley values':s})
 
-    df = pd.DataFrame({'Attribute': all_attributes_original, 'Shapley values': s})
-    df.sort_values(by='Shapley values', key=abs, inplace=True, ascending=False)
+    df.sort_values(by='Shapley values',key=abs, inplace=True,ascending=False)
 
     small_shap_values = df[6:]
     summary_shap_values = df[:6]
 
-    summary_shap_values = summary_shap_values.append({'Attribute': 'other positive Shapley values',
-                                                      'Shapley values': sum([x if x > 0 else 0 for x in
-                                                                             small_shap_values['Shapley values']])},
-                                                     ignore_index=True)
-    summary_shap_values = summary_shap_values.append({'Attribute': 'other negative Shapley values',
-                                                      'Shapley values': sum([x if x < 0 else 0 for x in
-                                                                             small_shap_values['Shapley values']])},
-                                                     ignore_index=True)
-    # print("in ** 1:")
-    # print(summary_shap_values)
+    summary_shap_values = summary_shap_values.append({'Attribute': 'other positive Shapley values', 'Shapley values': sum([x if x > 0 else 0 for x in small_shap_values['Shapley values']])}, ignore_index=True)
+    summary_shap_values = summary_shap_values.append({'Attribute': 'other negative Shapley values', 'Shapley values': sum([x if x < 0 else 0 for x in small_shap_values['Shapley values']])}, ignore_index=True)
+
+    print(summary_shap_values)
 
     summary_shap_values = summary_shap_values[::-1]
     # summary_shap_values.plot(kind='barh',x='Attribute',y='Shapley values',color=[color[4] if t > 0 else color[0] for t in summary_shap_values['Shapley values']], figsize=(18, 16), legend=False, fontsize=FONTSIZE, ax=axis)
-    summary_shap_values.plot(kind='barh', x='Attribute', y='Shapley values',
-                             color=[color[4] if t > 0 else color[0] for t in summary_shap_values['Shapley values']],
-                             legend=False, fontsize=FONTSIZE, ax=axis)
+    summary_shap_values.plot(kind='barh',x='Attribute',y='Shapley values',color=[color[4] if t > 0 else color[0] for t in summary_shap_values['Shapley values']], legend=False, fontsize=FONTSIZE, ax=axis)
     axis.set_ylabel('Attribute', fontsize=FONTSIZE)
-    return summary_shap_values;
-    # print("in ** 2: ", summary_shap_values)
     # plt.show()
     # plt.xlabel('Shapley values', fontsize=FONTSIZE)
     # plt.ylabel('Attribute', fontsize=FONTSIZE)
@@ -305,14 +215,24 @@ def plot_average_shap_value_of_group(data, group, selected_attributes, all_attri
     # return plt
 
 
-def get_shaped_values(ranked_data, all_attributes):
+def get_shap_plot(ranked_data, all_attributes, selected_attributes, all_attributes_original, group):
     x = ranked_data[all_attributes]
     y = ranked_data['rank']
-    # TODO: I chagned all_attributes_original to  all_attributes
-    # print("type of all_attri: ",x)
-    # print("type of all_attri_original: ", all_attributes_original)
-    #todo don think we need it
-    #x.set_axis(all_attributes, axis=1, inplace=True)
+    # have to convert strings to numbers for linear regression
+    def convert_string_to_number(df, all_attributes):
+        col_idx = 0
+        def convert_to_number(column):
+            nonlocal col_idx
+            if column.dtypes == 'object':
+                unique_values = sorted(column.unique())
+                print(all_attributes[col_idx], unique_values)
+                df[all_attributes[col_idx]].replace(to_replace=unique_values,
+                                  value=range(1, len(unique_values)+1), inplace=True)
+            col_idx += 1
+        df.apply(convert_to_number, axis=0)
+        return df
+
+    x = convert_string_to_number(x, all_attributes)
 
     # with sklearn
     model = LinearRegression()
@@ -323,4 +243,48 @@ def get_shaped_values(ranked_data, all_attributes):
     # compute the SHAP values for the linear model
     explainer = shap.Explainer(model.predict, x)
     shap_values = explainer(x)
-    return shap_values
+    print(shap_values)
+
+
+    fig, ax = plt.subplots(1, 1, figsize=(14, 7))
+
+    plot_average_shap_value_of_group(ranked_data, group, selected_attributes, all_attributes_original, shap_values, ax)
+    plt.xticks([0, 10, 20, 30], fontsize=FONTSIZE)
+    plt.tight_layout()
+    plt.savefig(r"student_shap_globalbounds.png", bbox_inches='tight')
+    plt.show()
+
+
+
+def get_dis_plot(ranked_data, all_attributes, all_attributes_original, original_att, group, group_name, k):
+    fig, ax = plt.subplots(1, 1,figsize=(14, 6))
+    att = all_attributes[all_attributes_original.index(original_att)]
+    att = att[:len(att)-2]
+    plot_distribution_ratio(ranked_data, att, original_att, group, group_name, k, ax)
+    # plt.yticks([0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35], fontsize=FONTSIZE)
+    fig.show()
+    plt.savefig(r"student_value_dis_globalbounds.png", bbox_inches='tight')
+
+
+
+
+# def get_shaped_values(ranked_data, all_attributes):
+#     x = ranked_data[all_attributes]
+#     y = ranked_data['rank']
+#     # TODO: I chagned all_attributes_original to  all_attributes
+#     # print("type of all_attri: ",x)
+#     # print("type of all_attri_original: ", all_attributes_original)
+#     #todo don think we need it
+#     #x.set_axis(all_attributes, axis=1, inplace=True)
+#
+#     # with sklearn
+#     model = LinearRegression()
+#     model.fit(x, y)
+#     print("Model coefficients:\n")
+#     for i in range(x.shape[1]):
+#         print(x.columns[i], "=", model.coef_[i].round(5))
+#     # compute the SHAP values for the linear model
+#     explainer = shap.Explainer(model.predict, x)
+#     shap_values = explainer(x)
+#     return shap_values
+#

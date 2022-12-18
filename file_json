@@ -3,7 +3,7 @@
   "threshold":50,
   "k_min": 10,
   "k_max": 15,
-  "alpha": 0.05
+  "alpha": 0.8
 
 
 }

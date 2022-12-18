@@ -28,7 +28,7 @@ def getGroups():
     global pattern_treated_unfairly_lowerbound, attributes, ranked_data, k_min
     task_content = json.loads(request.data.decode())
     # typeOfAlgorithm = task_content['typeOfAlgorithm']
-    attributes = ["sex", "age_cat", "race_factor"];
+    attributes = ["sex", "age_cat", "race_factor"]
     threshold = int(task_content['threshold'])
     alpha = float(task_content['alpha'])
     k_min = int(task_content['kMin'])
@@ -46,10 +46,12 @@ def getGroups():
     Lowerbounds = [2 for x in List_k]
     Upperbounds = [8 for x in List_k]
 
-    pattern_treated_unfairly_lowerbound, num_patterns_visited, time = GraphTraverseProportional(
+    pattern_treated_unfairly_lowerbound, num_patterns_visited, time, patterns_size_whole = GraphTraverseProportional(
         ranked_data_selected_attributes, attributes, threshold, alpha, k_min, k_max, 60 * 10)
-
-    return pattern_treated_unfairly_lowerbound;
+    # to get group size: when the string format of a group is st
+    # size = patterns_size_whole[st]
+    # list format of this group is string2list(st)
+    return pattern_treated_unfairly_lowerbound
 
 
 @app.route('/getShapes', methods=['POST'])
