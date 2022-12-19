@@ -462,7 +462,7 @@ def GraphTraverse(ranked_data, attributes, Thc, Lowerbounds, k_min, k_max, time_
             to_search_down = []
             for st in result_set_lowerbound:
                 num_patterns_visited += 1
-                p = string2num(st)
+                p = string2list(st)
                 if TSatisfiesP(new_tuple, p, num_att):
                     num_top_k = patterns_top_k.pattern_count(st)
                     if num_top_k >= Lowerbounds[k - k_min]:
@@ -493,7 +493,7 @@ def GraphTraverse(ranked_data, attributes, Thc, Lowerbounds, k_min, k_max, time_
             for st in patterns_dominated_by_result:
                 num_patterns_visited += 1
                 num_top_k = patterns_top_k.pattern_count(st)
-                p = string2num(st)
+                p = string2list(st)
                 if num_top_k >= Lowerbounds[k - k_min]:
                     to_remove_from_dominted_set.add(st)
                     if p[num_att - 1] == -1:
