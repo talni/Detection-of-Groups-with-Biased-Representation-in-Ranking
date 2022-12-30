@@ -213,6 +213,7 @@ def plot_average_shap_value_of_group(data, group, selected_attributes, all_attri
     # plt.tight_layout()
     # fig.set(xlabel='Shapley values')
     # return plt
+    return summary_shap_values
 
 
 def get_shap_plot(ranked_data, all_attributes, selected_attributes, all_attributes_original, group):
@@ -268,23 +269,25 @@ def get_dis_plot(ranked_data, all_attributes, all_attributes_original, original_
 
 
 
-# def get_shaped_values(ranked_data, all_attributes):
-#     x = ranked_data[all_attributes]
-#     y = ranked_data['rank']
-#     # TODO: I chagned all_attributes_original to  all_attributes
-#     # print("type of all_attri: ",x)
-#     # print("type of all_attri_original: ", all_attributes_original)
-#     #todo don think we need it
-#     #x.set_axis(all_attributes, axis=1, inplace=True)
-#
-#     # with sklearn
-#     model = LinearRegression()
-#     model.fit(x, y)
-#     print("Model coefficients:\n")
-#     for i in range(x.shape[1]):
-#         print(x.columns[i], "=", model.coef_[i].round(5))
-#     # compute the SHAP values for the linear model
-#     explainer = shap.Explainer(model.predict, x)
-#     shap_values = explainer(x)
-#     return shap_values
-#
+def get_shaped_values(ranked_data, all_attributes):
+    x = ranked_data[all_attributes]
+    y = ranked_data['rank']
+    # TODO: I chagned all_attributes_original to  all_attributes
+    # print("type of all_attri: ",x)
+    # print("type of all_attri_original: ", all_attributes_original)
+    #todo don think we need it
+    #x.set_axis(all_attributes, axis=1, inplace=True)
+
+    # with sklearn
+    model = LinearRegression()
+    model.fit(x, y)
+    print("Model coefficients:\n")
+    for i in range(x.shape[1]):
+        print(x.columns[i], "=", model.coef_[i].round(5))
+    # compute the SHAP values for the linear model
+    explainer = shap.Explainer(model.predict, x)
+    shap_values = explainer(x)
+    return shap_values
+
+
+
