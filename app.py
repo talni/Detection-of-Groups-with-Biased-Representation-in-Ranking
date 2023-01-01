@@ -40,7 +40,8 @@ def getGroups():
     k_min = int(task_content['kMin'])
     k_max = int(task_content['kMax'])
 
-    original_data_file = r"file_csv_students"
+    #original_data_file = r"file_csv_students"
+    original_data_file = r"student-mat_cat_ranked.csv"
     ranked_data = pd.read_csv(original_data_file)
     ranked_data_selected_attributes = ranked_data[attributes]
     # if task_content['numOfOption'] == "1":
@@ -54,13 +55,14 @@ def getGroups():
 
     pattern_treated_unfairly_lowerbound, num_patterns_visited, time, patterns_size_whole = GraphTraverseProportional(
         ranked_data_selected_attributes, attributes, threshold, alpha, k_min, k_max, 60 * 10)
-
+    #TODO Jin
+    size_with_top_k = 10
     print("*****!:")
     ans = []
     count_k = k_min
     for k in pattern_treated_unfairly_lowerbound:
         for group in k:
-            ans.append([ group, patterns_size_whole[str(group)], count_k])
+            ans.append([ group, patterns_size_whole[str(group)], count_k, size_with_top_k])
         count_k = count_k + 1
     print("&&&: ", ans)
     return ans;
@@ -85,6 +87,7 @@ def getShapes():
 
     return result;
 
+#TODO with JinYang
 @app.route('/getDistrbution', methods=['POST'])
 @cross_origin()
 def getDistrbution():
@@ -98,7 +101,7 @@ def getDistrbution():
     original_att = 'final grade'
     group_name = "\{mother's education = 5th to 9th grade\}"
     #def plot_distribution_ratio(ranked_data, attribute, selected_attributes, original_att, group, group_name, k, axis):
-    boom = plot_distribution_ratio(ranked_data, attribute, attribute, group, group_name, k, ax)
+    boom = plot_distribution_ratio(ranked_data, attribute, attribute, original_att, group, group_name, k, ax)
 
     print(boom)
     return "Hello";

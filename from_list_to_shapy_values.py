@@ -91,6 +91,7 @@ def idx_of_tuples_in_group(group, data):
             return True
         else:
             return False
+    print("****** data: ",data)
     data["in"] = data.apply(belong_to_group, axis=1)
     return data[data["in"] == True].index
 
