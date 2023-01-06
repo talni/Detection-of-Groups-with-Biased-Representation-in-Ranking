@@ -36,7 +36,7 @@ def non_proportional_algorithm(request):
     ranked_data = ranked_data[attributes]
 
     pattern_treated_unfairly_lowerbound, num_patterns_visited, \
-        time, patterns_size_whole = GraphTraverseNonProportional(ranked_data,
+        time, patterns_size_whole,  patterns_size_topk = GraphTraverseNonProportional(ranked_data,
                                                                  attributes, thc,
                                                                  Lowerbounds, k_min,
                                                                  k_max, 60 * 10)
@@ -74,9 +74,16 @@ def proportional_algorithm(request):
     # def GraphTraverse(ranked_data, attributes, Thc, alpha, k_min, k_max, time_limit)
     # pattern_treated_unfairly_lowerbound, pattern_treated_unfairly_upperbound, num_patterns_visited, running_time
     pattern_treated_unfairly_lowerbound, num_patterns_visited, \
-        time, patterns_size_whole = GraphTraverseProportional(ranked_data, attributes,
+        time, patterns_size_whole, patterns_size_topk = GraphTraverseProportional(ranked_data, attributes,
                                                               thc, alpha, k_min,
                                                               k_max, 60 * 10)
+
+    """
+    get biased groups associated with k: pattern_treated_unfairly_lowerbound[k]
+    print groups associated with each k:
+    for k in range(k_min, k_max):
+        print(pattern_treated_unfairly_lowerbound[k])
+    """
 
     print("in 77 pattern: ", pattern_treated_unfairly_lowerbound, "    ************* num: ", num_patterns_visited)
     return "hello prop"

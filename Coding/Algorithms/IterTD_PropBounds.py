@@ -634,6 +634,12 @@ def GraphTraverse(ranked_data, attributes, Thc, alpha, k_min, k_max, time_limit)
     k_dict = dict()
     dominated_by_result = set()
 
+    """
+    to get pattern in top k for the purpose of demo:
+    """
+    patterns_size_topk = dict()
+    patterns_size_topk[k_min] = patterns_top_kmin
+
     # this dict stores all patterns, indexed by num2string(p)
     nodes_dict = SortedDict()
     time_setup1 = 0
@@ -699,6 +705,7 @@ def GraphTraverse(ranked_data, attributes, Thc, alpha, k_min, k_max, time_limit)
         time1 = time.time()
         patterns_top_k = pattern_count.PatternCounter(ranked_data[:k], encoded=False)
         patterns_top_k.parse_data()
+        patterns_size_topk[k] = patterns_top_k
         new_tuple = ranked_data.iloc[[k - 1]].values.flatten().tolist()
         print("k={}, new tuple = {}".format(k, new_tuple))
         # print("dominated_by_result: ", dominated_by_result)
@@ -749,7 +756,12 @@ def GraphTraverse(ranked_data, attributes, Thc, alpha, k_min, k_max, time_limit)
                                                Thc, ranked_data)
         pattern_treated_unfairly.append(result_set)
     time1 = time.time()
-    return pattern_treated_unfairly, num_patterns_visited, time1 - time0, patterns_size_whole
+    """
+    to get pattern in top k for the purpose of demo:
+    when the string format of a pattern is st, then size of st in top k is 
+    size = patterns_size_topk[k].pattern_count(st)
+    """
+    return pattern_treated_unfairly, num_patterns_visited, time1 - time0, patterns_size_whole, patterns_size_topk
 
 
 # search top-down to go over all patterns related to new_tuple
