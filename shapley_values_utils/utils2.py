@@ -47,7 +47,6 @@ FONTSIZE=50
 
 
 
-
 def string2list(st):
     p = list()
     idx = 0
@@ -218,6 +217,7 @@ def plot_average_shap_value_of_group(data, group, selected_attributes, all_attri
     # return plt
 
 
+
 def get_shap_plot(ranked_data, all_attributes, selected_attributes, all_attributes_original, group):
     x = ranked_data[all_attributes]
     y = ranked_data['rank']
@@ -267,7 +267,6 @@ def get_dis_plot(ranked_data, all_attributes, all_attributes_original, original_
     # plt.yticks([0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35], fontsize=FONTSIZE)
     fig.show()
     plt.savefig(r"student_value_dis_globalbounds.png", bbox_inches='tight')
-
 
 
 

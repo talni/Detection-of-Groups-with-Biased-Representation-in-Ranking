@@ -91,7 +91,6 @@ def idx_of_tuples_in_group(group, data):
             return True
         else:
             return False
-    print("****** data: ",data)
     data["in"] = data.apply(belong_to_group, axis=1)
     return data[data["in"] == True].index
 
@@ -214,7 +213,7 @@ def plot_average_shap_value_of_group(data, group, selected_attributes, all_attri
     # plt.tight_layout()
     # fig.set(xlabel='Shapley values')
     # return plt
-    return summary_shap_values
+
 
 
 def get_shap_plot(ranked_data, all_attributes, selected_attributes, all_attributes_original, group):
@@ -266,7 +265,6 @@ def get_dis_plot(ranked_data, all_attributes, all_attributes_original, original_
     # plt.yticks([0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35], fontsize=FONTSIZE)
     fig.show()
     plt.savefig(r"student_value_dis_globalbounds.png", bbox_inches='tight')
-
 
 
 

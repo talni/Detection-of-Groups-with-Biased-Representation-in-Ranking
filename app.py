@@ -53,19 +53,17 @@ def getGroups():
     Lowerbounds = [2 for x in List_k]
     Upperbounds = [8 for x in List_k]
 
-    pattern_treated_unfairly_lowerbound, num_patterns_visited, time, patterns_size_whole = GraphTraverseProportional(
+    pattern_treated_unfairly_lowerbound, num_patterns_visited, time, patterns_size_whole, patterns_size_topk = GraphTraverseProportional(
         ranked_data_selected_attributes, attributes, threshold, alpha, k_min, k_max, 60 * 10)
-    #TODO Jin
-    size_with_top_k = 10
     print("*****!:")
     ans = []
     count_k = k_min
     for k in pattern_treated_unfairly_lowerbound:
         for group in k:
-            ans.append([ group, patterns_size_whole[str(group)], count_k, size_with_top_k])
-        count_k = count_k + 1
+            ans.append([group, patterns_size_whole[group], count_k, patterns_size_topk[k].pattern_count(group)])
+        count_k += 1
     print("&&&: ", ans)
-    return ans;
+    return ans
 
 @app.route('/getShapleyValues', methods=['POST'])
 @cross_origin()
@@ -84,8 +82,9 @@ def getShapes():
     shaped_values_per_group = shaped_values_per_group.to_dict(orient='records')
     result = [[item['Attribute'], item['Shapley values']] for item in shaped_values_per_group]
     print("^^^^: ", result)
-
-    return result;
+    # FIXME: can't return a list.
+    #  The return type must be a string, dict, tuple, Response instance, or WSGI callable, but it was a list.
+    return result
 
 #TODO with JinYang
 @app.route('/getDistrbution', methods=['POST'])
@@ -104,7 +103,7 @@ def getDistrbution():
     boom = plot_distribution_ratio(ranked_data, attribute, attribute, original_att, group, group_name, k, ax)
 
     print(boom)
-    return "Hello";
+    return "Hello"
 
 
 if __name__ == "_main_":
