@@ -200,19 +200,22 @@ def plot_average_shap_value_of_group(data, group, selected_attributes, all_attri
 
     summary_shap_values = summary_shap_values.append({'Attribute': 'other positive Shapley values', 'Shapley values': sum([x if x > 0 else 0 for x in small_shap_values['Shapley values']])}, ignore_index=True)
     summary_shap_values = summary_shap_values.append({'Attribute': 'other negative Shapley values', 'Shapley values': sum([x if x < 0 else 0 for x in small_shap_values['Shapley values']])}, ignore_index=True)
-
+    print("-------5")
     print(summary_shap_values)
-
-    summary_shap_values = summary_shap_values[::-1]
-    # summary_shap_values.plot(kind='barh',x='Attribute',y='Shapley values',color=[color[4] if t > 0 else color[0] for t in summary_shap_values['Shapley values']], figsize=(18, 16), legend=False, fontsize=FONTSIZE, ax=axis)
-    summary_shap_values.plot(kind='barh',x='Attribute',y='Shapley values',color=[color[4] if t > 0 else color[0] for t in summary_shap_values['Shapley values']], legend=False, fontsize=FONTSIZE, ax=axis)
-    axis.set_ylabel('Attribute', fontsize=FONTSIZE)
+    # print("-------6")
+    # summary_shap_values = summary_shap_values[::-1]
+    # print("-------7"+summary_shap_values)
+    # # summary_shap_values.plot(kind='barh',x='Attribute',y='Shapley values',color=[color[4] if t > 0 else color[0] for t in summary_shap_values['Shapley values']], figsize=(18, 16), legend=False, fontsize=FONTSIZE, ax=axis)
+    # summary_shap_values.plot(kind='barh',x='Attribute',y='Shapley values',color=[color[4] if t > 0 else color[0] for t in summary_shap_values['Shapley values']], legend=False, fontsize=FONTSIZE, ax=axis)
+    # axis.set_ylabel('Attribute', fontsize=FONTSIZE)
+    # print("-------8" + summary_shap_values)
     # plt.show()
     # plt.xlabel('Shapley values', fontsize=FONTSIZE)
     # plt.ylabel('Attribute', fontsize=FONTSIZE)
     # plt.tight_layout()
-    # fig.set(xlabel='Shapley values')
-    # return plt
+    # print("-------9" + plt)
+    #fig.set(xlabel='Shapley values')
+    return summary_shap_values
 
 
 
@@ -226,6 +229,7 @@ def get_shap_plot(ranked_data, all_attributes, selected_attributes, all_attribut
             nonlocal col_idx
             if column.dtypes == 'object':
                 unique_values = sorted(column.unique())
+                print("--------0")
                 print(all_attributes[col_idx], unique_values)
                 df[all_attributes[col_idx]].replace(to_replace=unique_values,
                                   value=range(1, len(unique_values)+1), inplace=True)
@@ -238,18 +242,23 @@ def get_shap_plot(ranked_data, all_attributes, selected_attributes, all_attribut
     # with sklearn
     model = LinearRegression()
     model.fit(x, y)
+    #print("--------1")
     print("Model coefficients:\n")
     for i in range(x.shape[1]):
         print(x.columns[i], "=", model.coef_[i].round(5))
     # compute the SHAP values for the linear model
     explainer = shap.Explainer(model.predict, x)
     shap_values = explainer(x)
+    #print("--------2")
     print(shap_values)
 
 
     fig, ax = plt.subplots(1, 1, figsize=(14, 7))
-
-    plot_average_shap_value_of_group(ranked_data, group, selected_attributes, all_attributes_original, shap_values, ax)
+    print("--------3")
+    a = plot_average_shap_value_of_group(ranked_data, group, selected_attributes, all_attributes_original, shap_values, ax)
+    print("--------4: a: ")
+    print(a)
+    return a
     plt.xticks([0, 10, 20, 30], fontsize=FONTSIZE)
     plt.tight_layout()
     plt.savefig(r"student_shap_globalbounds.png", bbox_inches='tight')

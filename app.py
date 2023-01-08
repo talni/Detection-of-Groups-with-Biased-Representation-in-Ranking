@@ -56,11 +56,12 @@ def getGroups():
     pattern_treated_unfairly_lowerbound, num_patterns_visited, time, patterns_size_whole, patterns_size_topk = GraphTraverseProportional(
         ranked_data_selected_attributes, attributes, threshold, alpha, k_min, k_max, 60 * 10)
     print("*****!:")
+    print(pattern_treated_unfairly_lowerbound,patterns_size_topk[10].pattern_count('M||MS'))
     ans = []
     count_k = k_min
     for k in pattern_treated_unfairly_lowerbound:
         for group in k:
-            ans.append([group, patterns_size_whole[group], count_k, patterns_size_topk[k].pattern_count(group)])
+            ans.append([group, patterns_size_whole[group], count_k, patterns_size_topk[count_k].pattern_count(group)])
         count_k += 1
     print("&&&: ", ans)
     return ans
@@ -74,16 +75,24 @@ def getShapes():
     shapes_data = json.loads(request.data.decode())
     k = int(shapes_data['k'])
     size = int(shapes_data['size'])
+    print("**** group " + shapes_data['group'])
     group = string2list(shapes_data['group'])
+    #group = shapes_data['group']
+    #print("**** group "+group)
     shaped_values = get_shap_plot(ranked_data, attributes, attributes, attributes, group)
-
-    # group = string2list(group)
-    # fig, axis = plt.subplots(1, 1, figsize=(14, 7))
-    # shaped_values_per_group = plot_average_shap_value_of_group(
-    #     ranked_data, group, attributes, attributes, shaped_values, axis)
-    # shaped_values_per_group = shaped_values_per_group.to_dict(orient='records')
-    # result = [[item['Attribute'], item['Shapley values']] for item in shaped_values_per_group]
-    # print("^^^^: ", result)
+    print("*****0 ")
+    print(shaped_values)
+    group = string2list(group)
+    fig, axis = plt.subplots(1, 1, figsize=(14, 7))
+    shaped_values_per_group = plot_average_shap_value_of_group(
+        ranked_data, group, attributes, attributes, shaped_values, axis)
+    print("*****1 ")
+    print(shaped_values_per_group)
+    shaped_values_per_group = shaped_values_per_group.to_dict(orient='records')
+    print("*****2 ")
+    print(shaped_values_per_group)
+    result = [[item['Attribute'], item['Shapley values']] for item in shaped_values_per_group]
+    print("^^^^: ", result)
     # FIXME: can't return a list.
     #  The return type must be a string, dict, tuple, Response instance, or WSGI callable, but it was a list.
     return
