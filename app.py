@@ -10,7 +10,7 @@ from Coding.Algorithms.IterTD_GlobalBounds \
 from Coding.Algorithms.IterTD_PropBounds \
     import GraphTraverse as GraphTraverseProportional
 from from_list_to_shapy_values import string2list, shapley_values_att_value_seperated, get_shaped_values, \
-    plot_average_shap_value_of_group, plot_distribution_ratio
+    plot_average_shap_value_of_group, plot_distribution_ratio, get_shap_plot
 
 from utils_2 import from_group_to_shape
 
@@ -74,17 +74,19 @@ def getShapes():
     shapes_data = json.loads(request.data.decode())
     k = int(shapes_data['k'])
     size = int(shapes_data['size'])
-    group = str(shapes_data['group'])
-    group = string2list(group)
-    fig, axis = plt.subplots(1, 1, figsize=(14, 7))
-    shaped_values_per_group = plot_average_shap_value_of_group(
-        ranked_data, group, attributes, attributes, shaped_values, axis)
-    shaped_values_per_group = shaped_values_per_group.to_dict(orient='records')
-    result = [[item['Attribute'], item['Shapley values']] for item in shaped_values_per_group]
-    print("^^^^: ", result)
+    group = string2list(shapes_data['group'])
+    get_shap_plot(ranked_data, attributes, attributes, attributes, group)
+    
+    # group = string2list(group)
+    # fig, axis = plt.subplots(1, 1, figsize=(14, 7))
+    # shaped_values_per_group = plot_average_shap_value_of_group(
+    #     ranked_data, group, attributes, attributes, shaped_values, axis)
+    # shaped_values_per_group = shaped_values_per_group.to_dict(orient='records')
+    # result = [[item['Attribute'], item['Shapley values']] for item in shaped_values_per_group]
+    # print("^^^^: ", result)
     # FIXME: can't return a list.
     #  The return type must be a string, dict, tuple, Response instance, or WSGI callable, but it was a list.
-    return result
+    return
 
 #TODO with JinYang
 @app.route('/getDistrbution', methods=['POST'])
