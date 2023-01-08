@@ -71,37 +71,19 @@ def getGroups():
 def getShapes():
     ##########
     global pattern_treated_unfairly_lowerbound, attributes, ranked_data, k_min, shaped_values
-    # shaped_values = get_shaped_values(ranked_data, attributes) if shaped_values is None else shaped_values
     shapes_data = json.loads(request.data.decode())
-    k = int(shapes_data['k'])
-    size = int(shapes_data['size'])
-    print("**** group " + shapes_data['group'])
     group = string2list(shapes_data['group'])
-    #group = shapes_data['group']
-    #print("**** group "+group)
     shaped_values = get_shap_plot(ranked_data, attributes, attributes, attributes, group)
-    print("*****0 ")
     print(shaped_values)
-    group = string2list(group)
-    fig, axis = plt.subplots(1, 1, figsize=(14, 7))
-    shaped_values_per_group = plot_average_shap_value_of_group(
-        ranked_data, group, attributes, attributes, shaped_values, axis)
-    print("*****1 ")
-    print(shaped_values_per_group)
-    shaped_values_per_group = shaped_values_per_group.to_dict(orient='records')
-    print("*****2 ")
+    shaped_values_per_group = shaped_values.to_dict(orient='records')
     print(shaped_values_per_group)
     result = [[item['Attribute'], item['Shapley values']] for item in shaped_values_per_group]
-    print("^^^^: ", result)
-    # FIXME: can't return a list.
-    #  The return type must be a string, dict, tuple, Response instance, or WSGI callable, but it was a list.
-    return
+    return result
 
 #TODO with JinYang
 @app.route('/getDistrbution', methods=['POST'])
 @cross_origin()
 def getDistrbution():
-    ##########
     global pattern_treated_unfairly_lowerbound, attributes, ranked_data, k_min, shaped_values
     fig, ax = plt.subplots(1, 1, figsize=(14, 6))
     data = json.loads(request.data.decode())

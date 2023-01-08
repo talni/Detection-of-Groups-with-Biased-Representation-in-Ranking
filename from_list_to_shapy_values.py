@@ -229,8 +229,8 @@ def get_shap_plot(ranked_data, all_attributes, selected_attributes, all_attribut
             nonlocal col_idx
             if column.dtypes == 'object':
                 unique_values = sorted(column.unique())
-                print("--------0")
-                print(all_attributes[col_idx], unique_values)
+                # print("--------0")
+                # print(all_attributes[col_idx], unique_values)
                 df[all_attributes[col_idx]].replace(to_replace=unique_values,
                                   value=range(1, len(unique_values)+1), inplace=True)
             col_idx += 1
@@ -250,14 +250,14 @@ def get_shap_plot(ranked_data, all_attributes, selected_attributes, all_attribut
     explainer = shap.Explainer(model.predict, x)
     shap_values = explainer(x)
     #print("--------2")
-    print(shap_values)
+    #print(shap_values)
 
 
     fig, ax = plt.subplots(1, 1, figsize=(14, 7))
-    print("--------3")
+    #print("--------3")
     a = plot_average_shap_value_of_group(ranked_data, group, selected_attributes, all_attributes_original, shap_values, ax)
-    print("--------4: a: ")
-    print(a)
+    # print("--------4: a: ")
+    # print(a)
     return a
     plt.xticks([0, 10, 20, 30], fontsize=FONTSIZE)
     plt.tight_layout()
