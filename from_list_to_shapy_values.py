@@ -254,6 +254,7 @@ def get_shap_plot(ranked_data, all_attributes, selected_attributes, all_attribut
     plt.tight_layout()
     plt.savefig(r"student_shap_globalbounds.png", bbox_inches='tight')
     plt.show()
+    return shap_values
 
 
 

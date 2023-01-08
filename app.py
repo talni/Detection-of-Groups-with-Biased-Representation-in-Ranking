@@ -70,13 +70,13 @@ def getGroups():
 def getShapes():
     ##########
     global pattern_treated_unfairly_lowerbound, attributes, ranked_data, k_min, shaped_values
-    shaped_values = get_shaped_values(ranked_data, attributes) if shaped_values is None else shaped_values
+    # shaped_values = get_shaped_values(ranked_data, attributes) if shaped_values is None else shaped_values
     shapes_data = json.loads(request.data.decode())
     k = int(shapes_data['k'])
     size = int(shapes_data['size'])
     group = string2list(shapes_data['group'])
-    get_shap_plot(ranked_data, attributes, attributes, attributes, group)
-    
+    shaped_values = get_shap_plot(ranked_data, attributes, attributes, attributes, group)
+
     # group = string2list(group)
     # fig, axis = plt.subplots(1, 1, figsize=(14, 7))
     # shaped_values_per_group = plot_average_shap_value_of_group(
