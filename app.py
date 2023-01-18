@@ -1,6 +1,6 @@
 import json
 import pandas as pd
-from flask import Flask, request, render_template, redirect, flash, jsonify
+from flask import Flask, request, render_template, redirect, flash, jsonify, Response
 from flask_cors import CORS, cross_origin
 from werkzeug.utils import secure_filename
 from matplotlib import pyplot as plt
@@ -32,72 +32,83 @@ shaped_values = None
 @cross_origin()
 def getGroups():
     print('in getGroups')
-    global pattern_treated_unfairly_lowerbound, attributes, ranked_data, k_min
+    global pattern_treated_unfairly_lowerbound, attributes, ranked_data, k_min, all_attributes
     task_content = json.loads(request.data.decode())
     attributes = task_content['attributes']
     threshold = int(task_content['threshold'])
     alpha = float(task_content['alpha'])
     k_min = int(task_content['kMin'])
     k_max = int(task_content['kMax'])
+    print(task_content)
 
     #original_data_file = r"file_csv_students"
     original_data_file = r"student-mat_cat_ranked.csv"
     ranked_data = pd.read_csv(original_data_file)
+    all_attributes = ranked_data.columns.to_list()
+    all_attributes.remove("rank")
     ranked_data_selected_attributes = ranked_data[attributes]
     # if task_content['numOfOption'] == "1":
     #     original_data_file = r"file_csv_students"
     #     ranked_data = pd.read_csv(original_data_file)
     #     ranked_data_selected_attributes = ranked_data[attributes]
 
-    List_k = list(range(k_min, k_max))
-    Lowerbounds = [2 for x in List_k]
-    Upperbounds = [8 for x in List_k]
-
     pattern_treated_unfairly_lowerbound, num_patterns_visited, time, patterns_size_whole, patterns_size_topk = GraphTraverseProportional(
         ranked_data_selected_attributes, attributes, threshold, alpha, k_min, k_max, 60 * 10)
-    print("*****!:")
-    print(pattern_treated_unfairly_lowerbound,patterns_size_topk[10].pattern_count('M||MS'))
+    # print("*****!:")
+    # print(pattern_treated_unfairly_lowerbound, patterns_size_topk[10].pattern_count('M||MS'))
+    # ans = dict()
+    # count_k = k_min
+    # for k in pattern_treated_unfairly_lowerbound:
+    #     ans[count_k] = []
+    #     for group in k:
+    #         ans[count_k].append([group, patterns_size_whole.pattern_count(group), count_k, patterns_size_topk[count_k].pattern_count(group)])
+    #     count_k += 1
+    # print("&&&: ", ans)
+    # return ans
     ans = []
     count_k = k_min
     for k in pattern_treated_unfairly_lowerbound:
         for group in k:
-            ans.append([group, patterns_size_whole[group], count_k, patterns_size_topk[count_k].pattern_count(group)])
+            ans.append([group, patterns_size_whole.pattern_count(group), count_k, patterns_size_topk[count_k].pattern_count(group)])
         count_k += 1
     print("&&&: ", ans)
-    return ans
+    return jsonify(ans)
 
 @app.route('/getShapleyValues', methods=['POST'])
 @cross_origin()
 def getShapes():
+    print("Here is getShapes")
     ##########
-    global pattern_treated_unfairly_lowerbound, attributes, ranked_data, k_min, shaped_values
+    global pattern_treated_unfairly_lowerbound, attributes, ranked_data, k_min, shapley_values, all_attributes
     shapes_data = json.loads(request.data.decode())
+    print("shapes_data: ", shapes_data)
     group = string2list(shapes_data['group'])
-    shaped_values = get_shap_plot(ranked_data, attributes, attributes, attributes, group)
-    print(shaped_values)
-    shaped_values_per_group = shaped_values.to_dict(orient='records')
+    shapley_values = get_shap_plot(ranked_data, all_attributes, attributes, all_attributes, group)
+    print(shapley_values)
+    shaped_values_per_group = shapley_values.to_dict(orient='records')
     print(shaped_values_per_group)
     result = [[item['Attribute'], item['Shapley values']] for item in shaped_values_per_group]
-    return result
+    print("result: ", result)
+    return jsonify(result)
 
 #TODO with JinYang
 @app.route('/getDistrbution', methods=['POST'])
 @cross_origin()
 def getDistrbution():
-    global pattern_treated_unfairly_lowerbound, attributes, ranked_data, k_min, shaped_values
-    fig, ax = plt.subplots(1, 1, figsize=(14, 6))
+    global pattern_treated_unfairly_lowerbound, attributes, ranked_data, k_min, shapley_values
+    # fig, ax = plt.subplots(1, 1, figsize=(14, 6))
     data = json.loads(request.data.decode())
     attribute = str(data['attribute'])
     group = str(data['group'])
     k = int(data['k'])
     original_att = 'final grade'
-    group_name = "\{mother's education = 5th to 9th grade\}"
+    group_name = group  # FIXME: group name
     #def plot_distribution_ratio(ranked_data, attribute, selected_attributes, original_att, group, group_name, k, axis):
-    boom = plot_distribution_ratio(ranked_data, attribute, attribute, original_att, group, group_name, k, ax)
-
-    print(boom)
-    return "Hello"
+    res = plot_distribution_ratio(ranked_data, attribute, attributes, original_att, string2list(group), group_name, k)
+    print("values distribution:", res)
+    print(res)
+    return jsonify(res)
 
 
 if __name__ == "_main_":
-    app.run(host="localhost", port=5001, debug=True)
+    app.run(host="localhost", port=5000, debug=True)

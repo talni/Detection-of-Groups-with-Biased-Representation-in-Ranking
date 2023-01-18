@@ -154,7 +154,7 @@ def tuples_not_in_group(g, data, selected_attributes):
 
 
 
-def plot_distribution_ratio(ranked_data, attribute, selected_attributes, original_att, group, group_name, k, axis):
+def plot_distribution_ratio(ranked_data, attribute, selected_attributes, original_att, group, group_name, k):
     x_list = ranked_data[attribute].unique()
     x_list.sort()
     print("unique values of {} = {}".format(attribute, x_list))
@@ -169,27 +169,28 @@ def plot_distribution_ratio(ranked_data, attribute, selected_attributes, origina
     total = sum(s)
     topkdis = [s[i]/total if i in s else 0 for i in x_list]
 
-    bar_width = 0.45
-    index = np.arange(len(x_list))
-    print(index)
-    axis.bar(index, group_value_dis, bar_width, color=color[3], label=group_name)
-    axis.bar(index + bar_width, topkdis, bar_width,  color=color[7], label="top-k")
-    # plt.xticks(index + bar_width, x_list)
-    # plt.xticks(range(x_list[0], x_list[-1]+1))
-    index2 = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18]
-    axis.set_xticks([x + bar_width/2 for x in index2], [0, 4, 6, 8, 10, 12, 14, 16, 18, 20], fontsize=FONTSIZE)
-    axis.set_yticks([0, 0.1, 0.2, 0.3], [0, 0.1, 0.2, 0.3], fontsize=FONTSIZE)
-    axis.set_ylabel('Proportion', fontsize=FONTSIZE)
-    axis.set_xlabel('Value of '+ original_att, fontsize=FONTSIZE)
-    axis.legend(loc='upper left', fontsize=40, bbox_to_anchor=(-0.02, 1.04))
+    return {"x": x_list.tolist(), "group": group_value_dis, "topk": topkdis}
+
+    # bar_width = 0.45
+    # index = np.arange(len(x_list))
+    # print(index)
+    # axis.bar(index, group_value_dis, bar_width, color=color[3], label=group_name)
+    # axis.bar(index + bar_width, topkdis, bar_width,  color=color[7], label="top-k")
+    # # plt.xticks(index + bar_width, x_list)
+    # # plt.xticks(range(x_list[0], x_list[-1]+1))
+    # index2 = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18]
+    # axis.set_xticks([x + bar_width/2 for x in index2], [0, 4, 6, 8, 10, 12, 14, 16, 18, 20], fontsize=FONTSIZE)
+    # axis.set_yticks([0, 0.1, 0.2, 0.3], [0, 0.1, 0.2, 0.3], fontsize=FONTSIZE)
+    # axis.set_ylabel('Proportion', fontsize=FONTSIZE)
+    # axis.set_xlabel('Value of '+ original_att, fontsize=FONTSIZE)
+    # axis.legend(loc='upper left', fontsize=40, bbox_to_anchor=(-0.02, 1.04))
     # plt.tight_layout()
     # plt.savefig("adult_time.png", bbox_inches='tight')
     # plt.show()
-    return axis
 
 
 
-def plot_average_shap_value_of_group(data, group, selected_attributes, all_attributes_original, shap_values, axis):
+def plot_average_shap_value_of_group(data, group, selected_attributes, all_attributes_original, shap_values):
     s = average_shapley_values_of_group(data, group, selected_attributes, shap_values)
     df=pd.DataFrame({'Attribute':all_attributes_original, 'Shapley values':s})
 
@@ -253,17 +254,17 @@ def get_shap_plot(ranked_data, all_attributes, selected_attributes, all_attribut
     #print(shap_values)
 
 
-    fig, ax = plt.subplots(1, 1, figsize=(14, 7))
+    # fig, ax = plt.subplots(1, 1, figsize=(14, 7))
     #print("--------3")
-    a = plot_average_shap_value_of_group(ranked_data, group, selected_attributes, all_attributes_original, shap_values, ax)
+    a = plot_average_shap_value_of_group(ranked_data, group, selected_attributes, all_attributes_original, shap_values)
     # print("--------4: a: ")
     # print(a)
     return a
-    plt.xticks([0, 10, 20, 30], fontsize=FONTSIZE)
-    plt.tight_layout()
-    plt.savefig(r"student_shap_globalbounds.png", bbox_inches='tight')
-    plt.show()
-    return shap_values
+    # plt.xticks([0, 10, 20, 30], fontsize=FONTSIZE)
+    # plt.tight_layout()
+    # plt.savefig(r"student_shap_globalbounds.png", bbox_inches='tight')
+    # plt.show()
+    # return shap_values
 
 
 
