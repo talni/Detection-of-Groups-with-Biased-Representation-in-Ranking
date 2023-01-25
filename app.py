@@ -25,14 +25,15 @@ pattern_treated_unfairly_lowerbound = None
 attributes = None
 ranked_data = None
 k_min = None
-shaped_values = None
+shapley_values = None
 
 
 @app.route('/getGroups', methods=['POST'])
 @cross_origin()
 def getGroups():
     print('in getGroups')
-    global pattern_treated_unfairly_lowerbound, attributes, ranked_data, k_min, all_attributes
+    global pattern_treated_unfairly_lowerbound, attributes, ranked_data, k_min, all_attributes, shapley_values
+    shapley_values = None
     task_content = json.loads(request.data.decode())
     attributes = task_content['attributes']
     threshold = int(task_content['threshold'])
@@ -83,7 +84,9 @@ def getShapes():
     shapes_data = json.loads(request.data.decode())
     print("shapes_data: ", shapes_data)
     group = string2list(shapes_data['group'])
-    shapley_values = get_shap_plot(ranked_data, all_attributes, attributes, all_attributes, group)
+    print("8******", shapley_values)
+    if shapley_values is None:
+        shapley_values = get_shap_plot(ranked_data, all_attributes, attributes, all_attributes, group)
     print(shapley_values)
     shaped_values_per_group = shapley_values.to_dict(orient='records')
     print(shaped_values_per_group)
